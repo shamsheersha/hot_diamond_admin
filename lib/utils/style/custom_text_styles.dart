@@ -25,6 +25,12 @@ class CustomTextStyles {
     fontWeight: FontWeight.normal,
     color: CustomColors.textColor,
   );
+  static const TextStyle categoryStryle = TextStyle(
+    fontFamily: CustomFonts.openSans,
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: CustomColors.buttonTextColor,
+  );
 
   static const TextStyle bodyText2 = TextStyle(
     fontFamily: CustomFonts.openSans,

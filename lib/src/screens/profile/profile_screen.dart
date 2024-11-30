@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hot_diamond_admin/src/screens/category/category_screen.dart';
+import 'package:hot_diamond_admin/src/screens/add_category/category_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
