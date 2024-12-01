@@ -34,15 +34,13 @@ class AddItemScreenState extends State<AddItemScreen> {
     return BlocListener<ItemBloc, ItemState>(
       listener: (context, state) {
         if (state is ItemAddedSuccess) {
+          _itemName.clear();
+          _amount.clear();
+          _description.clear();
           setState(() {
-            loading = false;
-            // Clear all fields
-            _itemName.clear();
-            _amount.clear();
-            _description.clear();
             selectedCategory = null;
             selectedImage = null;
-            _formKey.currentState?.reset();
+            loading = false;
           });
           showCustomSnackbar(context, 'Item added successfully',
               isError: false);
@@ -381,5 +379,13 @@ class AddItemScreenState extends State<AddItemScreen> {
         showCustomSnackbar(context, 'Please select an image', isError: true);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _itemName.clear();
+    _amount.clear();
+    _description.clear();
+    super.dispose();
   }
 }

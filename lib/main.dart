@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hot_diamond_admin/src/controllers/category/category_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/category/category_event.dart';
-import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/login/login_bloc.dart';

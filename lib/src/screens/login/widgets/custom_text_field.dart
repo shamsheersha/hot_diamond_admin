@@ -28,8 +28,8 @@ class CustomTextfield extends StatefulWidget {
     this.onChanged,
     this.decoration,
     this.readOnly,
-    this.prefixIcon,  this.maxLines,
-    
+    this.prefixIcon,
+    this.maxLines,
   });
 
   @override
@@ -52,9 +52,9 @@ class _CustomTextfieldState extends State<CustomTextfield> {
       autofocus: widget.autoFocus ?? false,
       cursorColor: Colors.black,
       readOnly: widget.readOnly ?? false,
-      maxLines: widget.maxLines,
+      maxLines: widget.isPassword ? 1 : widget.maxLines,  // Fix: set maxLines to 1 if password field
       decoration: InputDecoration(
-        prefixText: widget.prefixText, // Corrected this to use prefixText
+        prefixText: widget.prefixText,
         prefixIcon: widget.prefixIcon,
         labelText: widget.labelText,
         hintText: widget.hintText,

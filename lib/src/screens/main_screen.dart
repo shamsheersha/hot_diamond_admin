@@ -19,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
   static List<Widget> screens = [
     const HomeScreen(),
     const ListOfItems(),
-    AddItemScreen(),
+    const AddItemScreen(),
     const NotificationScreen(),
     const ProfileScreen(),
   ];

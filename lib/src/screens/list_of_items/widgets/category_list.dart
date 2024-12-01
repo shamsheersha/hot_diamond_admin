@@ -23,33 +23,40 @@ class CategoryList extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.black),
-            );
+                child: CircularProgressIndicator(color: Colors.black));
           } else if (snapshot.hasError) {
-            return const Center(child: Text('Failed to load categories'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No categories available'));
-          } else {
+            return Center(
+              child: Text('Error : ${snapshot.error}'),
+            );
+          } else if (snapshot.hasData) {
             final categories = snapshot.data!;
             return ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: categories.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  return _buildCategoryItem(label: 'All Items', isSelected: selectedCategoryId.isEmpty, onTap: ()=> onCategorySelected(''));
+                  return _buildCategoryItem(
+                    label: 'All Items',
+                    isSelected: selectedCategoryId.isEmpty,
+                    onTap: () => onCategorySelected(''),
+                  );
                 }
-
                 final category = categories[index - 1];
-                return _buildCategoryItem(label: category.name, isSelected: selectedCategoryId == category.id, onTap: ()=> onCategorySelected(''));
+                return _buildCategoryItem(
+                  label: category.name,
+                  isSelected: category.id == selectedCategoryId,
+                  onTap: () => onCategorySelected(category.id),
+                );
               },
             );
           }
+          return const Center(child: Text('No categories available'));
         },
       ),
     );
   }
 
-    Widget _buildCategoryItem({
+  Widget _buildCategoryItem({
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
@@ -57,7 +64,7 @@ class CategoryList extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 16),
+        margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.black,
