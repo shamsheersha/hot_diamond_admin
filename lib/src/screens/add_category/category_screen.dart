@@ -147,7 +147,6 @@ class CategoryScreenState extends State<CategoryScreen> {
                               IconButton(
                                 icon: const Icon(
                                   Icons.edit_rounded,
-                                  color: Colors.blue,
                                 ),
                                 onPressed: () {
                                   _showCategoryDialog(
@@ -165,7 +164,6 @@ class CategoryScreenState extends State<CategoryScreen> {
                               IconButton(
                                 icon: const Icon(
                                   Icons.delete_rounded,
-                                  color: Colors.red,
                                 ),
                                 onPressed: () {
                                   context.read<CategoryBloc>().add(DeleteCategoryEvent(categories[index].id));

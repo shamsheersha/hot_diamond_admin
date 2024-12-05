@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hot_diamond_admin/src/screens/login/widgets/custom_text_field.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
@@ -59,6 +60,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.grey[100],
       title: Text(
         'Edit Item',
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
@@ -118,34 +120,33 @@ class _EditItemDialogState extends State<EditItemDialog> {
   Widget _buildFormFields() {
     return Column(
       children: [
-        TextFormField(
+        CustomTextfield(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            border: OutlineInputBorder(),
-          ),
+          labelText: 'Name',
+          hintText: nameController.text,
+          isPassword: false,
           validator: (value) =>
               value?.isEmpty ?? true ? 'Please enter a name' : null,
         ),
         const SizedBox(height: 16),
-        TextFormField(
+        CustomTextfield(
           controller: descriptionController,
-          decoration: const InputDecoration(
             labelText: 'Description',
-            border: OutlineInputBorder(),
-          ),
+            hintText: descriptionController.text,
+            isPassword: false,
+          
           maxLines: 3,
           validator: (value) =>
               value?.isEmpty ?? true ? 'Please enter a description' : null,
         ),
         const SizedBox(height: 16),
-        TextFormField(
+        CustomTextfield(
           controller: priceController,
-          decoration: const InputDecoration(
+          hintText: priceController.text,
             labelText: 'Price',
-            border: OutlineInputBorder(),
             prefixText: '₹ ',
-          ),
+
+          isPassword: false,
           keyboardType: TextInputType.number,
           validator: (value) {
             if (value?.isEmpty ?? true) return 'Please enter a price';
@@ -186,7 +187,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
         },
         child: Text(
           'Save',
-          style: GoogleFonts.poppins(color: Colors.blue),
+          style: GoogleFonts.poppins(color: Colors.red),
         ),
       ),
     ];

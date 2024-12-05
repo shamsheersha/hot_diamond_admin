@@ -126,65 +126,75 @@ class _ListOfItemsState extends State<ListOfItems> {
                                 ),
                                 child: Stack(
                                   children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                    top: Radius.circular(12)),
-                                            child: Image.network(
-                                              item.imageUrl,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: const [
+                                          BoxShadow(blurRadius: 8,spreadRadius: 2,offset: Offset(0, 2),color: Colors.grey)
+                                        ]
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  const BorderRadius.vertical(
+                                                      top: Radius.circular(12)),
+                                              child: Image.network(
+                                                item.imageUrl,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(12),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item.name,
-                                                style: GoogleFonts.poppins(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 16,
+                                          Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item.name,
+                                                  style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 16,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                FirebaseCategoryService
-                                                    .getCategoryName(
-                                                        item.categoryId),
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.grey[600],
-                                                  fontSize: 14,
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  FirebaseCategoryService
+                                                      .getCategoryName(
+                                                          item.categoryId),
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 14,
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                '₹${item.price.toStringAsFixed(2)}',
-                                                style: GoogleFonts.poppins(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 16,
-                                                  color: Colors.black87,
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  '₹${item.price.toStringAsFixed(2)}',
+                                                  style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 16,
+                                                    color: Colors.black87,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                     Positioned(
                                       top: 8,
                                       right: 8,
                                       child: PopupMenuButton<String>(
+                                        color: Colors.grey[100],
                                         icon: const Icon(
                                           Icons.more_vert,
                                           color: Colors.black,

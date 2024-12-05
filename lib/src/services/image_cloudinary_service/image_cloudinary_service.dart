@@ -82,7 +82,7 @@ class ImageCloudinaryService {
       int timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
       // Create the string to sign (must be in alphabetical order)
-      String toSign = 'public_id=$publicId&timestamp=$timestamp${apiSecret}';
+      String toSign = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
 
       // Generate the signature
       var bytes = utf8.encode(toSign);

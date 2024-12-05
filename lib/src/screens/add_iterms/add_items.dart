@@ -369,7 +369,7 @@ class AddItemScreenState extends State<AddItemScreen> {
               ItemModel(
                 id: '',
                 categoryId: selectedCategory!,
-                name: _itemName.text,
+                name: _itemName.text.toUpperCase(),
                 description: _description.text,
                 price: double.parse(_amount.text),
                 imageUrl: selectedImage!.path,
