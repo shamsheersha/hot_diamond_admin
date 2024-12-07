@@ -21,6 +21,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
     try {
       final categories = await _service.fetchCategories();
+      FirebaseCategoryService.categoryIdToName = {for(var category in categories)category.id : category.name};
       emit(CategoryLoaded(categories));
       log('Fetched Category');
     } catch (e) {
@@ -56,6 +57,21 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   Future _onDeleteCategory(
       DeleteCategoryEvent event, Emitter<CategoryState> emit) async {
     try {
+      final currentState = state;
+      if(currentState is! CategoryLoaded){
+        emit(CategoryError('Failed to delete: Invalid state'));
+        return;
+      }
+
+      // Check for items before deletion
+      final hasItems = await _service.categoryHasItems(event.categoryId);
+      if (hasItems) {
+        emit(CategoryError('Cannot delete category that contains items'));
+        // Maintain the current categories in the UI
+        emit(CategoryLoaded(currentState.categories));
+        return;
+      }
+      
       await _service.deleteCategory(event.categoryId);
       add(FetchCategories());
       log('Deleted Category');

@@ -21,17 +21,17 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
     emit(ItemLoading());
 
     try {
-      // Upload image to Cloudinary
-      final imageUrl = await _cloudinaryService.uploadImage(event.item.imageUrl);
+      // Upload multiple images to Cloudinary
+      final imageUrls = await _cloudinaryService.uploadImages(event.item.imageUrls);
 
-      // Create new item with uploaded image URL
+      // Create new item with uploaded image URLs
       final newItem = ItemModel(
         id: event.item.id,
         name: event.item.name,
         description: event.item.description,
         price: event.item.price,
         categoryId: event.item.categoryId,
-        imageUrl: imageUrl,
+        imageUrls: imageUrls,
       );
 
       // Add to Firebase
@@ -53,25 +53,29 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         throw Exception('Item not found');
       }
 
-      String imageUrl = event.item.imageUrl;
+      List<String> updatedImageUrls = [...existingItem.imageUrls]; // Preserve existing image URLs
 
-      // Handle image update if changed
-      if (event.item.imageUrl != existingItem.imageUrl && 
-          !event.item.imageUrl.startsWith('http')) {
-        imageUrl = await _cloudinaryService.updateImage(
-          existingItem.imageUrl,
-          event.item.imageUrl,
-        ) ?? existingItem.imageUrl;
+      // If there's a new image, update only the first image (main image)
+      if (event.item.imageUrls.isNotEmpty && 
+          !event.item.imageUrls.first.startsWith('http')) {
+        String newMainImageUrl = await _cloudinaryService.updateImage(
+          existingItem.imageUrls.isNotEmpty ? existingItem.imageUrls.first : '',
+          event.item.imageUrls.first,
+        ) ?? '';
+        
+        if (newMainImageUrl.isNotEmpty) {
+          updatedImageUrls[0] = newMainImageUrl;
+        }
       }
 
-      // Update item with new image URL
+      // Update item with all image URLs
       final updatedItem = ItemModel(
         id: event.item.id,
         name: event.item.name,
         description: event.item.description,
         price: event.item.price,
         categoryId: event.item.categoryId,
-        imageUrl: imageUrl,
+        imageUrls: updatedImageUrls, // Use the complete list of image URLs
       );
 
       await _firebaseItemService.updateItem(updatedItem);
@@ -92,9 +96,9 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         throw Exception('Item not found');
       }
 
-      // Delete image from Cloudinary if exists
-      if (item.imageUrl.isNotEmpty) {
-        await _cloudinaryService.deleteImageByUrl(item.imageUrl);
+      // Delete all images from Cloudinary
+      if (item.imageUrls.isNotEmpty) {
+        await _cloudinaryService.deleteImagesByUrls(item.imageUrls);
       }
 
       // Delete item from Firebase
@@ -120,3 +124,4 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
 
   
 }
+

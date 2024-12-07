@@ -4,15 +4,19 @@ class ItemModel {
   final String description;
   final double price;
   final String categoryId;
-  final String imageUrl;
+   List<String> imageUrls;
 
-  ItemModel(
-      {required this.id,
-      required this.name,
-      required this.description,
-      required this.categoryId,
-      required this.price,
-      required this.imageUrl});
+  // Getter for the main image
+  String get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : '';
+
+  ItemModel({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.categoryId,
+    required this.price,
+    this.imageUrls = const [],
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -20,18 +24,17 @@ class ItemModel {
       'description': description,
       'price': price,
       'categoryId': categoryId,
-      'imageUrl': imageUrl
+      'imageUrls': imageUrls,
     };
   }
 
-   // Adding the copyWith method
   ItemModel copyWith({
     String? id,
     String? name,
     String? description,
     double? price,
     String? categoryId,
-    String? imageUrl,
+    List<String>? imageUrls,
   }) {
     return ItemModel(
       id: id ?? this.id,
@@ -39,17 +42,18 @@ class ItemModel {
       description: description ?? this.description,
       price: price ?? this.price,
       categoryId: categoryId ?? this.categoryId,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrls: imageUrls ?? this.imageUrls,
     );
   }
 
   factory ItemModel.fromMap(Map<String, dynamic> map, String id) {
     return ItemModel(
-        id: id,
-        name: map['name'],
-        description: map['description'],
-        categoryId: map['categoryId'],
-        price: map['price'],
-        imageUrl: map['imageUrl']);
+      id: id,
+      name: map['name'],
+      description: map['description'],
+      categoryId: map['categoryId'],
+      price: map['price'],
+      imageUrls: List<String>.from(map['imageUrls'] ?? []),
+    );
   }
 }

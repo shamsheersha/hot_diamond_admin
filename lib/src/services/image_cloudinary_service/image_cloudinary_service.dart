@@ -45,6 +45,39 @@ class ImageCloudinaryService {
     }
   }
 
+    //! UPLOAD MULTIPLE IMAGE
+    Future<List<String>> uploadImages(List<String> imagePaths)async{
+      List<String> uploadedUrls = [];
+
+      for(String imagePath in imagePaths){
+        try{
+          final url = await uploadImage(imagePath);
+          uploadedUrls.add(url);
+        }catch(e){
+          log('Error: uploading image: $imagePath,$e');
+        }
+      }
+      return uploadedUrls;
+    }
+
+
+    //! Delete multiple images
+    Future<bool> deleteImagesByUrls(List<String> imageUrls)async{
+      bool allSuccess = true;
+      for(String imageUrl in imageUrls){
+        try{
+          final success = await deleteImageByUrl(imageUrl);
+          if(!success){
+            allSuccess = false;
+          }
+        }catch(e){
+          log('Error deleting images: $imageUrl,Error: $e');
+          allSuccess = false;
+        }
+      }
+      return allSuccess;
+    }
+
   // Delete Image using URL
   Future<bool> deleteImageByUrl(String imageUrl) async {
     try {

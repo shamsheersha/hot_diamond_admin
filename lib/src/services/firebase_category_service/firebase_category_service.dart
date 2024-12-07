@@ -19,7 +19,10 @@ class FirebaseCategoryService {
   }
 
   static String getCategoryName(String categoryId) {
-    return categoryIdToName[categoryId] ?? 'Unknown Category';
+    if (categoryIdToName.isEmpty) {
+      FirebaseCategoryService().fetchCategories();
+    }
+    return categoryIdToName[categoryId] ?? 'Loading...';
   }
 
 //! ADD CATEGORY
@@ -35,6 +38,28 @@ class FirebaseCategoryService {
 
 //! DELETE CATEGORY
   Future deleteCategory(String categoryId) async {
-    await _categoriesRef.doc(categoryId).delete();
+    try {
+      final hasItems = await categoryHasItems(categoryId);
+      if (hasItems) {
+        throw Exception('Category contains items and cannot be deleted');
+      }
+      await _categoriesRef.doc(categoryId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete category: ${e.toString()}');
+    }
+  }
+
+  //! CHECK DELETION
+  Future<bool> categoryHasItems(String categoryId) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('items')
+          .where('categoryId', isEqualTo: categoryId)
+          .limit(1)
+          .get();
+      return querySnapshot.docs.isNotEmpty;
+    } catch (e) {
+      throw Exception('Failed to check items for category: ${e.toString()}');
+    }
   }
 }

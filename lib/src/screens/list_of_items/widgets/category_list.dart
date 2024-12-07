@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hot_diamond_admin/src/model/category_model/category_model.dart';
-import 'package:hot_diamond_admin/src/services/firebase_category_service/firebase_category_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/category/category_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
 
 class CategoryList extends StatelessWidget {
   final String selectedCategoryId;
@@ -18,18 +19,17 @@ class CategoryList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       height: 65,
-      child: FutureBuilder<List<CategoryModel>>(
-        future: FirebaseCategoryService().fetchCategories(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      child: BlocBuilder<CategoryBloc, CategoryState>(
+        builder: (context, state) {
+          if (state is CategoryLoading) {
             return const Center(
                 child: CircularProgressIndicator(color: Colors.black));
-          } else if (snapshot.hasError) {
+          } else if (state is CategoryError) {
             return Center(
-              child: Text('Error : ${snapshot.error}'),
+              child: Text('Error: ${state.message}'),
             );
-          } else if (snapshot.hasData) {
-            final categories = snapshot.data!;
+          } else if (state is CategoryLoaded) {
+            final categories = state.categories;
             return ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: categories.length + 1,

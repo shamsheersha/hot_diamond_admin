@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hot_diamond_admin/src/screens/add_iterms/add_items.dart';
+import 'package:hot_diamond_admin/src/screens/add_items/add_items.dart';
 import 'package:hot_diamond_admin/src/screens/home/home_screen.dart';
 import 'package:hot_diamond_admin/src/screens/list_of_items/list_of_items.dart';
 import 'package:hot_diamond_admin/src/screens/notifications/notification_screen.dart';

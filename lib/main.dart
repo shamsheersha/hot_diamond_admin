@@ -13,10 +13,15 @@ import 'package:hot_diamond_admin/src/services/firebase_category_service/firebas
 import 'package:hot_diamond_admin/src/services/firebase_item_service/firebase_item_service.dart';
 import 'package:hot_diamond_admin/src/services/image_cloudinary_service/image_cloudinary_service.dart';
 
-void main()async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await dotenv.load(fileName: '.env');
+  
+  // Initialize services
+  final categoryService = FirebaseCategoryService();
+  await categoryService.fetchCategories(); // Pre-fetch categories
+  
   runApp(const MyApp());
 }
 
@@ -36,7 +41,8 @@ class MyApp extends StatelessWidget {
             create: (context) => LoginBloc(),
           ),
           BlocProvider(
-            create: (context) => CategoryBloc(FirebaseCategoryService())..add(FetchCategories()),
+            create: (context) => CategoryBloc(FirebaseCategoryService())
+              ..add(FetchCategories()), // This will populate the categoryIdToName map
           ),
           BlocProvider(
             create: (context) => ItemBloc(imageCloudinaryService,firebaseItemService)..add(FetchItemsEvent()),

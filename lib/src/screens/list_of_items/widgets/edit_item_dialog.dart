@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
+import 'package:hot_diamond_admin/src/controllers/category/category_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
 
 class EditItemDialog extends StatefulWidget {
   final ItemModel item;
@@ -23,6 +25,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
   late final TextEditingController descriptionController;
   late final TextEditingController priceController;
   String? newImagePath;
+  late String selectedCategory;
 
   @override
   void initState() {
@@ -30,6 +33,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
     nameController = TextEditingController(text: widget.item.name);
     descriptionController = TextEditingController(text: widget.item.description);
     priceController = TextEditingController(text: widget.item.price.toString());
+    selectedCategory = widget.item.categoryId;
   }
 
   @override
@@ -129,6 +133,48 @@ class _EditItemDialogState extends State<EditItemDialog> {
               value?.isEmpty ?? true ? 'Please enter a name' : null,
         ),
         const SizedBox(height: 16),
+        
+        BlocBuilder<CategoryBloc, CategoryState>(
+          builder: (context, state) {
+            if (state is CategoryLoaded) {
+              return DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  prefixIcon: const Icon(Icons.category_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.black, width: 2.0),
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                  labelStyle: const TextStyle(color: Colors.black),
+                ),
+                items: state.categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category.id,
+                    child: Text(category.name),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      selectedCategory = newValue;
+                    });
+                  }
+                },
+                validator: (value) => value == null ? 'Select a category' : null,
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+        const SizedBox(height: 16),
         CustomTextfield(
           controller: descriptionController,
             labelText: 'Description',
@@ -174,11 +220,11 @@ class _EditItemDialogState extends State<EditItemDialog> {
           if (formKey.currentState?.validate() ?? false) {
             final updatedItem = ItemModel(
               id: widget.item.id,
-              name: nameController.text,
+              name: nameController.text.toUpperCase(),
               description: descriptionController.text,
               price: double.parse(priceController.text),
-              categoryId: widget.item.categoryId,
-              imageUrl: newImagePath ?? widget.item.imageUrl,
+              categoryId: selectedCategory,
+              imageUrls: newImagePath != null ? [newImagePath!] : widget.item.imageUrls,
             );
 
             context.read<ItemBloc>().add(UpdateItemEvent(updatedItem));

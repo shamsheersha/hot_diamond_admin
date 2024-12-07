@@ -44,7 +44,7 @@ class FirebaseItemService {
     }
   }
 
-  //! DELET ITEM
+  //! DELETE ITEM
   Future deleteItem(String itemId) async {
     try {
       await _firebaseFirestore.collection('items').doc(itemId).delete();

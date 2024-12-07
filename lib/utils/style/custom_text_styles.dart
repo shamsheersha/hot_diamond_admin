@@ -11,7 +11,12 @@ class CustomTextStyles {
     fontWeight: FontWeight.bold,
     color: CustomColors.textColor,
   );
-
+  static const TextStyle pageHeadLine = TextStyle(
+    fontFamily: CustomFonts.roboto,
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
+    color: CustomColors.textColor,
+  );
   static const TextStyle headline2 = TextStyle(
     fontFamily: CustomFonts.roboto,
     fontSize: 24,
