@@ -9,6 +9,7 @@ import 'package:hot_diamond_admin/src/screens/item_details/item_details.dart';
 import 'package:hot_diamond_admin/src/screens/list_of_items/widgets/category_list.dart';
 import 'package:hot_diamond_admin/src/screens/list_of_items/widgets/edit_item_dialog.dart';
 import 'package:hot_diamond_admin/src/services/firebase_category_service/firebase_category_service.dart';
+import 'package:hot_diamond_admin/utils/style/custom_text_styles.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_alert_dialog.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
 
@@ -159,6 +160,11 @@ class _ListOfItemsState extends State<ListOfItems> {
   Widget _buildFilteredItems(List<ItemModel> items) {
     final filteredItems =
         items.where((item) => item.categoryId == selectedCategoryId).toList();
+        if(filteredItems.isEmpty){
+          return const Center(
+            child: Text('No items available',style: CustomTextStyles.profilePhone,),
+          );
+        }
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),
@@ -182,7 +188,10 @@ class _ListOfItemsState extends State<ListOfItems> {
       child: Stack(
         children: [
           InkWell(
-            onTap: ()=> Navigator.of(context).push(MaterialPageRoute(builder: (context)=> ItemDetails(itemId: item.id,))),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => ItemDetails(
+                      itemId: item.id,
+                    ))),
             child: Container(
               decoration: BoxDecoration(
                   color: Colors.white,
@@ -202,30 +211,27 @@ class _ListOfItemsState extends State<ListOfItems> {
                       borderRadius:
                           const BorderRadius.vertical(top: Radius.circular(12)),
                       child: Image.network(
-                        item.imageUrl,
+                        item.imageUrl, 
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.image_not_supported_outlined,
-                                size: 40,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'No Image',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.grey[600],
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) {
+                            return child; 
+                          }
+                          return Image.asset(
+                            'assets/—Pngtree—gray network placeholder_6398266.png', 
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/—Pngtree—gray network placeholder_6398266.png', 
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -274,9 +280,9 @@ class _ListOfItemsState extends State<ListOfItems> {
       width: 32,
       height: 35,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12),topRight: Radius.circular(12))
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(12), topRight: Radius.circular(12))),
       child: PopupMenuButton<String>(
         padding: EdgeInsets.zero,
         color: Colors.grey[100],

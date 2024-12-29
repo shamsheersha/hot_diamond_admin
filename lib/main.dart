@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
               appBarTheme: const AppBarTheme(
                 color: Colors.transparent,
               ),
-              textSelectionTheme: TextSelectionThemeData(selectionHandleColor: Colors.black,),
+              textSelectionTheme: const TextSelectionThemeData(selectionHandleColor: Colors.black,),
               scaffoldBackgroundColor: Colors.grey[100]),
           debugShowCheckedModeBanner: false,
           home: const Splash(),

@@ -39,18 +39,18 @@ dependencies:
   bloc: ^8.1.4
   equatable: ^2.0.5
   shared_preferences: ^2.3.3
-  animated_bottom_navigation_bar: ^1.3.3
-  curved_navigation_bar: ^1.0.6
   google_fonts: ^6.2.1
   firebase_core: ^3.8.0
   cloud_firestore: ^5.5.0
   dotted_border: ^2.1.0
   http: ^1.2.2
-  image_picker: ^1.1.2
+  # image_picker: ^1.1.2
   flutter_dotenv: ^5.2.1
   cloudinary: ^1.2.0
   crypto: ^3.0.6
   carousel_slider: ^5.0.0
+  file_picker: ^8.1.6
+  reorderable_grid_view: ^2.2.8
 
 dev_dependencies:
   flutter_test:
@@ -77,7 +77,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
-    - assets/840ccc14-b0e1-4ec2-8b65-3332ab05c32b_page-0003.png
+    - assets/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

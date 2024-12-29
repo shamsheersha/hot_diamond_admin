@@ -1,9 +1,9 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_diamond_admin/src/screens/login/widgets/custom_text_field.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
@@ -44,22 +44,26 @@ class _EditItemDialogState extends State<EditItemDialog> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    try {
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
-      if (image != null) {
-        setState(() {
-          newImagePath = image.path;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error picking image: $e');
+
+
+Future<void> _pickImage() async {
+  try {
+    // Open the file picker to select an image
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image, // Only allow image files
+      allowMultiple: false, // Single image selection
+    );
+
+    if (result != null && result.paths.isNotEmpty) {
+      setState(() {
+        newImagePath = result.paths.first!; // Store the path of the selected image
+      });
     }
+  } catch (e) {
+    debugPrint('Error picking image: $e');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

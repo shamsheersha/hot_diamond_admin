@@ -32,6 +32,7 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         price: event.item.price,
         categoryId: event.item.categoryId,
         imageUrls: imageUrls,
+        variations: event.item.variations
       );
 
       // Add to Firebase
@@ -76,6 +77,7 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         price: event.item.price,
         categoryId: event.item.categoryId,
         imageUrls: updatedImageUrls, // Use the complete list of image URLs
+        variations: event.item.variations
       );
 
       await _firebaseItemService.updateItem(updatedItem);

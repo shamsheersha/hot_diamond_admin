@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:developer';
-
+import 'dart:io';
 
 import 'package:cloudinary/cloudinary.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,65 +20,80 @@ class ImageCloudinaryService {
         );
 
   Future<String> uploadImage(String imagePath) async {
-    final String cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
-    if (cloudName.isEmpty) {
-      throw Exception('Cloudinary cloud name not configured');
-    }
-    final String cloudinaryUrl =
-        "https://api.cloudinary.com/v1_1/$cloudName/image/upload";
-    final String uploadPreset = dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
-    if (uploadPreset.isEmpty) {
-      throw Exception('Cloudinary upload preset not conifgured');
-    }
+    try {
+      final String cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
+      if (cloudName.isEmpty) {
+        throw Exception('Cloudinary cloud name not configured');
+      }
+      final String cloudinaryUrl =
+          "https://api.cloudinary.com/v1_1/$cloudName/image/upload";
+      final String uploadPreset = dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
+      if (uploadPreset.isEmpty) {
+        throw Exception('Cloudinary upload preset not configured');
+      }
 
-    var request = http.MultipartRequest('POST', Uri.parse(cloudinaryUrl));
-    request.fields['upload_preset'] = uploadPreset;
-    request.files.add(await http.MultipartFile.fromPath('file', imagePath));
+      // Read the file as bytes instead of creating a new file
+      final File imageFile = File(imagePath);
+      final bytes = await imageFile.readAsBytes();
+      
+      // Create multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(cloudinaryUrl));
+      request.fields['upload_preset'] = uploadPreset;
+      
+      // Add file bytes directly without creating a new file
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: imagePath.split('/').last,
+        ),
+      );
 
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      final responseData = await response.stream.bytesToString();
-      final data = json.decode(responseData);
-      return data['secure_url'];
-    } else {
-      throw Exception('Failed to upload image to cloudinary');
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        final data = json.decode(responseData);
+        return data['secure_url'];
+      } else {
+        throw Exception('Failed to upload image to cloudinary');
+      }
+    } catch (e) {
+      log('Error uploading image: $e');
+      rethrow;
     }
   }
 
-    //! UPLOAD MULTIPLE IMAGE
-    Future<List<String>> uploadImages(List<String> imagePaths)async{
-      List<String> uploadedUrls = [];
+  Future<List<String>> uploadImages(List<String> imagePaths) async {
+    List<String> uploadedUrls = [];
 
-      for(String imagePath in imagePaths){
-        try{
-          final url = await uploadImage(imagePath);
-          uploadedUrls.add(url);
-        }catch(e){
-          log('Error: uploading image: $imagePath,$e');
-        }
+    for (String imagePath in imagePaths) {
+      try {
+        final url = await uploadImage(imagePath);
+        uploadedUrls.add(url);
+      } catch (e) {
+        log('Error uploading image: $imagePath, $e');
       }
-      return uploadedUrls;
     }
+    return uploadedUrls;
+  }
 
-
-    //! Delete multiple images
-    Future<bool> deleteImagesByUrls(List<String> imageUrls)async{
-      bool allSuccess = true;
-      for(String imageUrl in imageUrls){
-        try{
-          final success = await deleteImageByUrl(imageUrl);
-          if(!success){
-            allSuccess = false;
-          }
-        }catch(e){
-          log('Error deleting images: $imageUrl,Error: $e');
+  // Rest of your methods remain the same...
+  Future<bool> deleteImagesByUrls(List<String> imageUrls) async {
+    bool allSuccess = true;
+    for (String imageUrl in imageUrls) {
+      try {
+        final success = await deleteImageByUrl(imageUrl);
+        if (!success) {
           allSuccess = false;
         }
+      } catch (e) {
+        log('Error deleting images: $imageUrl,Error: $e');
+        allSuccess = false;
       }
-      return allSuccess;
     }
+    return allSuccess;
+  }
 
-  // Delete Image using URL
   Future<bool> deleteImageByUrl(String imageUrl) async {
     try {
       if (!imageUrl.contains('cloudinary')) {
@@ -97,7 +112,6 @@ class ImageCloudinaryService {
     }
   }
 
-  // Delete Image using public ID
   Future<bool> deleteImage(String publicId) async {
     try {
       final String cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
@@ -107,28 +121,18 @@ class ImageCloudinaryService {
       if (cloudName.isEmpty || apiKey.isEmpty || apiSecret.isEmpty) {
         throw Exception('Cloudinary credentials not properly configured');
       }
-  
-      log('Deleting image with public ID: $publicId');
-      log('Using cloud name: $cloudName');
-      
-      // Generate the timestamp
+
       int timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
-      // Create the string to sign (must be in alphabetical order)
       String toSign = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
-
-      // Generate the signature
       var bytes = utf8.encode(toSign);
       var digest = sha1.convert(bytes);
       String signature = digest.toString();
 
       var uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/destroy');
-
+      
       var response = await http.post(
         uri,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'public_id': publicId,
           'timestamp': timestamp.toString(),
@@ -137,19 +141,11 @@ class ImageCloudinaryService {
         },
       );
 
-      log('Response status: ${response.statusCode}');
-      log('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
-        if (responseBody['result'] == 'ok') {
-          log('Successfully deleted image from Cloudinary');
-          return true;
-        } else {
-          throw Exception('Failed to delete image: ${responseBody['error']?.toString()}');
-        }
+        return responseBody['result'] == 'ok';
       } else {
-        throw Exception('Failed to delete image. Status: ${response.statusCode}, Body: ${response.body}');
+        throw Exception('Failed to delete image. Status: ${response.statusCode}');
       }
     } catch (e) {
       log('Error in deleteImage: $e');
@@ -157,20 +153,17 @@ class ImageCloudinaryService {
     }
   }
 
-  // Update Image
-  Future<String?> updateImage(String oldImageUrl,String newImagePath)async{
-    try{
-      if(oldImageUrl.isNotEmpty){
+  Future<String?> updateImage(String oldImageUrl, String newImagePath) async {
+    try {
+      if (oldImageUrl.isNotEmpty) {
         await deleteImageByUrl(oldImageUrl);
       }
-
       return await uploadImage(newImagePath);
-    }catch(e){
+    } catch (e) {
       rethrow;
     }
   }
 
-  // Helper method to extract public ID from URL
   String? extractPublicId(String imageUrl) {
     try {
       final Uri imageUri = Uri.parse(imageUrl);
@@ -182,8 +175,6 @@ class ImageCloudinaryService {
             .join('/')
             .split('.')
             .first;
-        
-        // Remove version number
         return fullPath.replaceFirst(RegExp(r'v\d+/'), '');
       }
       return null;

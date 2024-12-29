@@ -14,6 +14,7 @@ class CustomTextfield extends StatefulWidget {
   final String? prefixText;
   final Icon? prefixIcon;
   final int? maxLines;
+  final String? initialValue;
 
   const CustomTextfield({
     super.key,
@@ -30,6 +31,7 @@ class CustomTextfield extends StatefulWidget {
     this.readOnly,
     this.prefixIcon,
     this.maxLines,
+    this.initialValue
   });
 
   @override
@@ -49,6 +51,7 @@ class _CustomTextfieldState extends State<CustomTextfield> {
           : widget.keyboardType,
       validator: widget.validator,
       onChanged: widget.onChanged,
+      initialValue: widget.initialValue,
       autofocus: widget.autoFocus ?? false,
       cursorColor: Colors.black,
       readOnly: widget.readOnly ?? false,

@@ -1,4 +1,6 @@
+import 'dart:developer';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -8,10 +10,11 @@ import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
+import 'package:hot_diamond_admin/src/enum/portion_type.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
+import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
 import 'package:hot_diamond_admin/src/screens/login/widgets/custom_text_field.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
-import 'package:image_picker/image_picker.dart';
 
 class EditItemScreen extends StatefulWidget {
   final ItemModel item; // Pass the existing item data to the screen
@@ -26,11 +29,14 @@ class EditItemScreenState extends State<EditItemScreen> {
   final TextEditingController _itemName = TextEditingController();
   final TextEditingController _amount = TextEditingController();
   final TextEditingController _description = TextEditingController();
+  final List<TextEditingController> _quantityControllers = [];
+  final List<TextEditingController> _priceControllers = [];
+  List<PortionType> _selectedPortionTypes = [];
   final _formKey = GlobalKey<FormState>();
   String? selectedCategory;
   List<dynamic> selectedImages = []; // Can contain URLs or Files
   bool loading = false;
-
+  bool hasVariations = false;
   @override
   void initState() {
     super.initState();
@@ -39,7 +45,20 @@ class EditItemScreenState extends State<EditItemScreen> {
     _amount.text = widget.item.price.toString();
     _description.text = widget.item.description;
     selectedCategory = widget.item.categoryId;
-    selectedImages = widget.item.imageUrls; // Start with URLs of existing images
+    selectedImages =
+        widget.item.imageUrls; // Start with URLs of existing images
+    // Check if item has variations and set toggle accordingly
+    hasVariations = widget.item.variations.isNotEmpty;
+    // Prefill variations
+    if (hasVariations) {
+      for (var variation in widget.item.variations) {
+        final quantityController = TextEditingController(text: variation.quantity.toString());
+        final priceController = TextEditingController(text: variation.price.toString());
+        _quantityControllers.add(quantityController);
+        _priceControllers.add(priceController);
+        _selectedPortionTypes.add(variation.portionType);
+      }
+    }
   }
 
   @override
@@ -47,7 +66,8 @@ class EditItemScreenState extends State<EditItemScreen> {
     return BlocListener<ItemBloc, ItemState>(
       listener: (context, state) {
         if (state is ItemUpdatedSuccess) {
-          showCustomSnackbar(context, 'Item updated successfully', isError: false);
+          showCustomSnackbar(context, 'Item updated successfully',
+              isError: false);
           Navigator.pop(context); // Return to the previous screen
         } else if (state is ItemError) {
           setState(() {
@@ -97,6 +117,8 @@ class EditItemScreenState extends State<EditItemScreen> {
                     _buildImageUploadSection(),
                     const SizedBox(height: 24),
                     _buildProductDetailsCard(context),
+                    const SizedBox(height: 24),
+                    _buildVariationsSection(),
                   ],
                 ),
               ),
@@ -209,13 +231,15 @@ class EditItemScreenState extends State<EditItemScreen> {
               mainAxisSpacing: 8,
             ),
             itemCount: selectedImages.length,
-            itemBuilder: (context, index) => _buildImageTile(selectedImages[index], index),
+            itemBuilder: (context, index) =>
+                _buildImageTile(selectedImages[index], index),
           ),
         ),
         _buildAddMoreButton(),
       ],
     );
   }
+
   Widget _buildProductDetailsCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -324,6 +348,7 @@ class EditItemScreenState extends State<EditItemScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 20),
 
           const SizedBox(height: 20),
 
@@ -383,11 +408,168 @@ class EditItemScreenState extends State<EditItemScreen> {
     );
   }
 
+  Widget _buildVariationsSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Item Variations',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _addVariation,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Variation'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black87,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_quantityControllers.isEmpty) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                'Add variations for different serving sizes',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          ..._quantityControllers.asMap().entries.map((entry) {
+            final index = entry.key;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      // Quantity field
+                      Expanded(
+                        child: CustomTextfield(
+                          controller: _quantityControllers[index],
+                          hintText: 'e.g., 4',
+                          labelText: 'Quantity',
+                          isPassword: false,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Required';
+                            }
+                            if (int.tryParse(value) == null) {
+                              return 'Enter number';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Portion type dropdown
+                      Expanded(
+                        child: DropdownButtonFormField<PortionType>(
+                          value: _selectedPortionTypes[index],
+                          decoration: InputDecoration(
+                            labelText: 'Type',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black, width: 2.0),
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                            ),
+                            enabledBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                            ),
+                            labelStyle: const TextStyle(color: Colors.black),
+                          ),
+                          items: PortionType.values.map((type) {
+                            return DropdownMenuItem(
+                              value: type,
+                              child: Text(type.name),
+                            );
+                          }).toList(),
+                          onChanged: (PortionType? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedPortionTypes[index] = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomTextfield(
+                          controller: _priceControllers[index],
+                          labelText: 'Price',
+                          hintText: '₹ 0.00',
+                          keyboardType: TextInputType.number,
+                          isPassword: false,
+                          prefixIcon: const Icon(Icons.currency_rupee),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Required';
+                            }
+                            if (double.tryParse(value) == null) {
+                              return 'Enter valid price';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _removeVariation(index),
+                        icon: const Icon(Icons.delete_outline),
+                        color: Colors.grey[800],
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   void _removeImage(int index) {
     setState(() {
       selectedImages.removeAt(index);
     });
   }
+
   Widget _buildAddMoreButton() {
     return Container(
       width: double.infinity,
@@ -415,48 +597,97 @@ class EditItemScreenState extends State<EditItemScreen> {
   }
 
   void _pickImage() async {
-    final picker = ImagePicker();
-    try {
-      final pickedFile =
-          await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
-      if (pickedFile != null) {
-        setState(() {
-          selectedImages.add(File(pickedFile.path));
-        });
-      }
-    } catch (e) {
-      // Handle error if any
+    
+  try {
+    // Open the file picker for image selection
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image, 
+      allowMultiple: true, 
+    );
+
+    if (result != null && result.paths.isNotEmpty) {
+      setState(() {
+        selectedImages.add(File(result.paths.first!)); 
+      });
     }
+  } catch (e) {
+    // Handle any errors
+    log('Error picking image: $e');
+  }
   }
 
   void _submitItem() async {
     if (_formKey.currentState!.validate()) {
-      if (selectedImages.isNotEmpty) {
-        setState(() {
-          loading = true;
-        });
+      if (selectedImages.isEmpty) {
+        showCustomSnackbar(context, 'Please select at least one image',
+            isError: true);
+        return;
+      }
+
+      if (_quantityControllers.isEmpty) {
+        showCustomSnackbar(context, 'Please add at least one variation',
+            isError: true);
+        return;
+      }
+
+      setState(() {
+        loading = true;
+      });
+
+      try {
+        // Create variations list
+        List<VariationModel> variations = [];
+        for (int i = 0; i < _quantityControllers.length; i++) {
+          variations.add(VariationModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString() + i.toString(),
+            quantity: int.parse(_quantityControllers[i].text),
+            portionType: _selectedPortionTypes[i],
+            price: double.parse(_priceControllers[i].text),
+          ));
+        }
 
         // Separate image URLs and new image files
         List<String> imageUrls = selectedImages.whereType<String>().toList();
-        List<String> newImagePaths = selectedImages
-            .whereType<File>()
-            .map((file) => file.path)
-            .toList();
+        List<String> newImagePaths =
+            selectedImages.whereType<File>().map((file) => file.path).toList();
 
         // Dispatch the update event
         context.read<ItemBloc>().add(UpdateItemEvent(
-               widget.item.copyWith(
+              widget.item.copyWith(
                 name: _itemName.text.toUpperCase(),
                 categoryId: selectedCategory!,
                 price: double.parse(_amount.text),
                 description: _description.text,
                 imageUrls: imageUrls + newImagePaths,
+                variations: variations,
               ),
             ));
-      } else {
-        showCustomSnackbar(context, 'Please select at least one image', isError: true);
+      } catch (e) {
+        setState(() {
+          loading = false;
+        });
+        showCustomSnackbar(context, 'Error updating item: ${e.toString()}',
+            isError: true);
       }
     }
+  }
+
+  void _addVariation() {
+    setState(() {
+      _quantityControllers.add(TextEditingController());
+      _priceControllers.add(TextEditingController());
+      _selectedPortionTypes.add(PortionType.pieces);
+    });
+  }
+
+  void _removeVariation(int index) {
+    setState(() {
+      _quantityControllers[index].dispose();
+      _priceControllers[index].dispose();
+      _quantityControllers.removeAt(index);
+      _priceControllers.removeAt(index);
+      _selectedPortionTypes.removeAt(index);
+    });
   }
 
   @override
@@ -464,6 +695,12 @@ class EditItemScreenState extends State<EditItemScreen> {
     _itemName.dispose();
     _amount.dispose();
     _description.dispose();
+    for (var controller in _quantityControllers) {
+      controller.dispose();
+    }
+    for (var controller in _priceControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 }
