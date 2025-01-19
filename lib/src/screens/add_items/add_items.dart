@@ -1,20 +1,21 @@
-import 'dart:developer';
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dotted_border/dotted_border.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_diamond_admin/src/controllers/category/category_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
+import 'package:hot_diamond_admin/src/enum/discount_type.dart';
 import 'package:hot_diamond_admin/src/enum/portion_type.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
+import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
 import 'package:hot_diamond_admin/src/screens/login/widgets/custom_text_field.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -29,13 +30,18 @@ class AddItemScreenState extends State<AddItemScreen> {
   final TextEditingController _description = TextEditingController();
   final List<TextEditingController> _quantityControllers = [];
   final List<TextEditingController> _priceControllers = [];
-  List<PortionType> _selectedPortionTypes = [];
+  final List<PortionType> _selectedPortionTypes = [];
   final _formKey = GlobalKey<FormState>();
   String? selectedCategory;
-  List<File> selectedImages = [];
   bool loading = false; // Track loading state
   bool hasVariations = false;
-
+  List<File> images = [];
+  bool hasOffer = false;
+  final TextEditingController offerDiscountValue = TextEditingController();
+  final TextEditingController offerDescription = TextEditingController();
+  DateTime? offerStartDate;
+  DateTime? offerEndDate;
+  DiscountType selectedDiscountType = DiscountType.percentage;
   @override
   Widget build(BuildContext context) {
     return BlocListener<ItemBloc, ItemState>(
@@ -44,12 +50,13 @@ class AddItemScreenState extends State<AddItemScreen> {
           _itemName.clear();
           _amount.clear();
           _description.clear();
+          images.clear();
           setState(() {
             selectedCategory = null;
-            selectedImages = [];
             loading = false;
           });
-          showCustomSnackbar(context, 'Item added successfully', isError: false);
+          showCustomSnackbar(context, 'Item added successfully',
+              isError: false);
         } else if (state is ItemError) {
           setState(() {
             loading = false;
@@ -96,11 +103,13 @@ class AddItemScreenState extends State<AddItemScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Image Upload Section
                     _buildImageUploadSection(),
                     const SizedBox(height: 24),
                     // Product Details Card
                     _buildProductDetailsCard(context),
+                    const SizedBox(height: 20),
+                    // Offer Section
+                    _buildOfferSection(),
                   ],
                 ),
               ),
@@ -154,7 +163,7 @@ class AddItemScreenState extends State<AddItemScreen> {
         color: Colors.grey.withOpacity(0.5),
         strokeWidth: 2,
         dashPattern: const [8, 4],
-        child: selectedImages.isNotEmpty
+        child: images.isNotEmpty
             ? _buildSelectedImagesGrid()
             : _buildEmptyImageUploadPrompt(),
       ),
@@ -163,7 +172,7 @@ class AddItemScreenState extends State<AddItemScreen> {
 
   Widget _buildEmptyImageUploadPrompt() {
     return InkWell(
-      onTap: _pickMultipleImages,
+      onTap: _pickImages,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -223,9 +232,9 @@ class AddItemScreenState extends State<AddItemScreen> {
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
-            itemCount: selectedImages.length,
+            itemCount: images.length,
             itemBuilder: (context, index) =>
-                _buildImageTile(selectedImages[index], index),
+                _buildImageTile(images[index], index),
           ),
         ),
         _buildAddMoreButton(),
@@ -250,7 +259,7 @@ class AddItemScreenState extends State<AddItemScreen> {
           top: 4,
           right: 4,
           child: GestureDetector(
-            onTap: () => _removeImage(index),
+            onTap: () => _removeImage(image),
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -294,7 +303,7 @@ class AddItemScreenState extends State<AddItemScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ElevatedButton.icon(
-        onPressed: _pickMultipleImages,
+        onPressed: _pickImages,
         icon: const Icon(Icons.add_photo_alternate_outlined, size: 20),
         label: Text(
           'Add More Images',
@@ -313,6 +322,36 @@ class AddItemScreenState extends State<AddItemScreen> {
         ),
       ),
     );
+  }
+
+  void _pickImages() async {
+    final ImagePicker picker = ImagePicker();
+    // Check if already at max images
+    if (images.length >= 4) {
+      showCustomSnackbar(
+        context,
+        'Maximum 4 images allowed',
+        isError: true,
+      );
+      return;
+    }
+    final List<XFile> pickedFiles = await picker.pickMultiImage(
+      imageQuality: 50,
+      maxWidth: 800,
+      maxHeight: 800,
+    );
+
+    if (pickedFiles.isNotEmpty) {
+      setState(() {
+        images.addAll(pickedFiles.map((file) => File(file.path)).toList());
+      });
+    }
+  }
+
+  void _removeImage(File image) {
+    setState(() {
+      images.remove(image);
+    });
   }
 
   Widget _buildProductDetailsCard(BuildContext context) {
@@ -597,12 +636,14 @@ class AddItemScreenState extends State<AddItemScreen> {
                             focusedBorder: const OutlineInputBorder(
                               borderSide:
                                   BorderSide(color: Colors.black, width: 2.0),
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
                             ),
                             enabledBorder: const OutlineInputBorder(
                               borderSide:
                                   BorderSide(color: Colors.grey, width: 1.0),
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
                             ),
                             labelStyle: const TextStyle(color: Colors.black),
                           ),
@@ -621,8 +662,6 @@ class AddItemScreenState extends State<AddItemScreen> {
                           },
                         ),
                       ),
-                      // const SizedBox(width: 16),
-                      // Price field
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -672,66 +711,34 @@ class AddItemScreenState extends State<AddItemScreen> {
     });
   }
 
-  Future<void> _pickMultipleImages() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: true,
-      );
-
-      if (result != null) {
-        // Create a set of existing paths to check for duplicates
-        final existingPaths = selectedImages.map((file) => file.path).toSet();
-
-        // Filter out duplicates before adding new images
-        final newImages = result.paths
-            .where((path) => path != null && !existingPaths.contains(path))
-            .map((path) => File(path!))
-            .toList();
-
-        if (newImages.isNotEmpty) {
-          setState(() {
-            selectedImages.addAll(newImages);
-          });
-        }
-      }
-    } catch (e) {
-      log('Error selecting multiple images: $e');
-    }
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      selectedImages.removeAt(index);
-    });
-    // Clean up the temporary file when removing an image
-    cleanUpTemporaryFiles([selectedImages[index].path]);
-  }
-
-  //! Add this method to clean up temporary files
-  Future<void> cleanUpTemporaryFiles(List<String> imagePaths) async {
-    for (String imagePath in imagePaths) {
-      final File imageFile = File(imagePath);
-      if (await imageFile.exists()) {
-        await imageFile.delete();
-      }
-    }
-  }
-
   void _submitItem() async {
     if (_formKey.currentState!.validate()) {
-      if (selectedImages.isEmpty) {
-        showCustomSnackbar(context, 'Please select at least one image',
-            isError: true);
-        return;
-      }
-
       if (hasVariations && _quantityControllers.isEmpty) {
         showCustomSnackbar(context, 'Please add at least one variation',
             isError: true);
         return;
       }
+      OfferModel? offer;
+      if (hasOffer) {
+        // Validation is missing for required offer fields
+        if (offerDiscountValue.text.isEmpty ||
+            offerDescription.text.isEmpty ||
+            offerStartDate == null ||
+            offerEndDate == null) {
+          showCustomSnackbar(context, 'Please fill all offer details',
+              isError: true);
+          return;
+        }
 
+        offer = OfferModel(
+          isEnabled: true,
+          discountType: selectedDiscountType,
+          discountValue: double.parse(offerDiscountValue.text),
+          startDate: offerStartDate!,
+          endDate: offerEndDate!,
+          description: offerDescription.text,
+        );
+      }
       setState(() {
         loading = true;
       });
@@ -742,17 +749,14 @@ class AddItemScreenState extends State<AddItemScreen> {
         if (hasVariations) {
           for (int i = 0; i < _quantityControllers.length; i++) {
             itemVariations.add(VariationModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString() + i.toString(),
+              id: DateTime.now().millisecondsSinceEpoch.toString() +
+                  i.toString(),
               quantity: int.parse(_quantityControllers[i].text),
               portionType: _selectedPortionTypes[i],
               price: double.parse(_priceControllers[i].text),
             ));
           }
         }
-
-        // Create list of image paths
-        List<String> imagePaths =
-            selectedImages.map((file) => file.path).toList();
 
         // Dispatch item event with or without variations
         context.read<ItemBloc>().add(AddItemEvent(
@@ -762,13 +766,11 @@ class AddItemScreenState extends State<AddItemScreen> {
                 name: _itemName.text.toUpperCase(),
                 description: _description.text,
                 variations: hasVariations ? itemVariations : [],
-                imageUrls: imagePaths,
                 price: double.parse(_amount.text),
+                imageUrls: images.map((file) => file.path).toList(),
+                offer: offer,
               ),
             ));
-
-        // Clean up temporary files
-        await cleanUpTemporaryFiles(imagePaths);
       } catch (e) {
         setState(() {
           loading = false;
@@ -777,6 +779,192 @@ class AddItemScreenState extends State<AddItemScreen> {
             isError: true);
       }
     }
+  }
+
+  // Add this method to build the offer section
+  Widget _buildOfferSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Offer Details',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Enable Offer Switch
+          SwitchListTile(
+            title: Text(
+              'Enable Offer',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            value: hasOffer,
+            onChanged: (bool value) {
+              setState(() {
+                hasOffer = value;
+              });
+            },
+            activeColor: Colors.black87,
+          ),
+
+          if (hasOffer) ...[
+            const SizedBox(height: 20),
+
+            // Discount Type
+            DropdownButtonFormField<DiscountType>(
+              value: selectedDiscountType,
+              decoration: InputDecoration(
+                labelText: 'Discount Type',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: DiscountType.values.map((type) {
+                return DropdownMenuItem(
+                  value: type,
+                  child: Text(type.name.toUpperCase()),
+                );
+              }).toList(),
+              onChanged: (DiscountType? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    selectedDiscountType = newValue;
+                  });
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Discount Value
+            CustomTextfield(
+              controller: offerDiscountValue,
+              labelText: selectedDiscountType == DiscountType.percentage
+                  ? 'Discount (%)'
+                  : 'Discount Amount',
+              hintText: selectedDiscountType == DiscountType.percentage
+                  ? 'Enter percentage'
+                  : 'Enter amount',
+              keyboardType: TextInputType.number,
+              isPassword: false,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Required';
+                final number = double.tryParse(value);
+                if (number == null) return 'Enter valid number';
+                if (selectedDiscountType == DiscountType.percentage &&
+                    number > 100) {
+                  return 'Percentage cannot exceed 100';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Date Range
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Start Date',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text: offerStartDate?.toString().split(' ')[0] ?? '',
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() {
+                          offerStartDate = date;
+                        });
+                      }
+                    },
+                    validator: (value) =>
+                        offerStartDate == null ? 'Required' : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'End Date',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text: offerEndDate?.toString().split(' ')[0] ?? '',
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: offerStartDate ?? DateTime.now(),
+                        firstDate: offerStartDate ?? DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() {
+                          offerEndDate = date;
+                        });
+                      }
+                    },
+                    validator: (value) =>
+                        offerEndDate == null ? 'Required' : null,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Offer Description
+            CustomTextfield(
+              controller: offerDescription,
+              labelText: 'Offer Description',
+              hintText: 'Enter offer details',
+              maxLines: 3,
+              isPassword: false,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Required';
+                return null;
+              },
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override

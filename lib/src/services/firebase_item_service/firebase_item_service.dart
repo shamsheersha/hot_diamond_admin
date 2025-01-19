@@ -63,14 +63,15 @@ class FirebaseItemService {
   }
 
   //! To get Image For Delete
-  Future<ItemModel?> getItem(String itemId)async{
-    try{
+  Future<ItemModel?> getItem(String itemId) async {
+    try {
       final doc = await _firebaseFirestore.collection('items').doc(itemId).get();
-      if(doc.exists){
+      if (doc.exists) {
         return ItemModel.fromMap(doc.data()!, doc.id);
-      }return null;
-    }catch (e){
-      throw Exception('Failed to get item:  $e');
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get item: $e');
     }
   }
 }

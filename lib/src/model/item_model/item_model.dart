@@ -1,3 +1,4 @@
+import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
 
 class ItemModel {
@@ -8,6 +9,7 @@ class ItemModel {
   final String categoryId;
   List<String> imageUrls;
   List<VariationModel> variations;
+  final OfferModel? offer;
 
   String get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : '';
   double get basePrice => variations.isNotEmpty ? variations.first.price : 0.0;
@@ -20,6 +22,7 @@ class ItemModel {
     required this.price,
     this.imageUrls = const [],
     this.variations = const [],
+    this.offer,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +33,7 @@ class ItemModel {
       'categoryId': categoryId,
       'imageUrls': imageUrls,
       'variations': variations.map((v) => v.toMap()).toList(),
+      'offer': offer?.toMap(),
     };
   }
 
@@ -42,6 +46,7 @@ class ItemModel {
     List<String>? imageUrls,
     bool? hasVariations,
     List<VariationModel>? variations,
+    OfferModel? offer,
   }) {
     return ItemModel(
       id: id ?? this.id,
@@ -51,6 +56,7 @@ class ItemModel {
       categoryId: categoryId ?? this.categoryId,
       imageUrls: imageUrls ?? this.imageUrls,
       variations: variations ?? this.variations,
+      offer: offer,
     );
   }
 
@@ -65,6 +71,7 @@ class ItemModel {
       variations: (map['variations'] as List<dynamic>?)
           ?.map((v) => VariationModel.fromMap(v))
           .toList() ?? [],
+      offer: map['offer'] != null ? OfferModel.fromMap(map['offer']) : null,
     );
   }
 }

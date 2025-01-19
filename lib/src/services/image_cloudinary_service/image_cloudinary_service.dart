@@ -35,11 +35,11 @@ class ImageCloudinaryService {
       // Read the file as bytes instead of creating a new file
       final File imageFile = File(imagePath);
       final bytes = await imageFile.readAsBytes();
-      
+
       // Create multipart request
       var request = http.MultipartRequest('POST', Uri.parse(cloudinaryUrl));
       request.fields['upload_preset'] = uploadPreset;
-      
+
       // Add file bytes directly without creating a new file
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -77,7 +77,6 @@ class ImageCloudinaryService {
     return uploadedUrls;
   }
 
-  // Rest of your methods remain the same...
   Future<bool> deleteImagesByUrls(List<String> imageUrls) async {
     bool allSuccess = true;
     for (String imageUrl in imageUrls) {
@@ -129,7 +128,7 @@ class ImageCloudinaryService {
       String signature = digest.toString();
 
       var uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/destroy');
-      
+
       var response = await http.post(
         uri,
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},

@@ -32,7 +32,8 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         price: event.item.price,
         categoryId: event.item.categoryId,
         imageUrls: imageUrls,
-        variations: event.item.variations
+        variations: event.item.variations,
+        offer: event.item.offer,
       );
 
       // Add to Firebase
@@ -57,13 +58,13 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
       List<String> updatedImageUrls = [...existingItem.imageUrls]; // Preserve existing image URLs
 
       // If there's a new image, update only the first image (main image)
-      if (event.item.imageUrls.isNotEmpty && 
+      if (event.item.imageUrls.isNotEmpty &&
           !event.item.imageUrls.first.startsWith('http')) {
         String newMainImageUrl = await _cloudinaryService.updateImage(
           existingItem.imageUrls.isNotEmpty ? existingItem.imageUrls.first : '',
           event.item.imageUrls.first,
         ) ?? '';
-        
+
         if (newMainImageUrl.isNotEmpty) {
           updatedImageUrls[0] = newMainImageUrl;
         }
@@ -77,7 +78,8 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         price: event.item.price,
         categoryId: event.item.categoryId,
         imageUrls: updatedImageUrls, // Use the complete list of image URLs
-        variations: event.item.variations
+        variations: event.item.variations,
+        offer: event.item.offer,
       );
 
       await _firebaseItemService.updateItem(updatedItem);
@@ -105,7 +107,7 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
 
       // Delete item from Firebase
       await _firebaseItemService.deleteItem(event.itemId);
-      
+
       emit(ItemDeletedSuccess());
       add(FetchItemsEvent());
     } catch (e) {
@@ -123,7 +125,4 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
       emit(ItemError('Failed to fetch items: ${e.toString()}'));
     }
   }
-
-  
 }
-

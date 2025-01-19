@@ -10,8 +10,10 @@ import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
+import 'package:hot_diamond_admin/src/enum/discount_type.dart';
 import 'package:hot_diamond_admin/src/enum/portion_type.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
+import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
 import 'package:hot_diamond_admin/src/screens/login/widgets/custom_text_field.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
@@ -37,6 +39,13 @@ class EditItemScreenState extends State<EditItemScreen> {
   List<dynamic> selectedImages = []; // Can contain URLs or Files
   bool loading = false;
   bool hasVariations = false;
+  bool hasOffer = false;
+  final TextEditingController offerDiscountValue = TextEditingController();
+  final TextEditingController offerDescription = TextEditingController();
+  DateTime? offerStartDate;
+  DateTime? offerEndDate;
+  DiscountType selectedDiscountType = DiscountType.percentage; 
+  bool isOfferActive = true;
   @override
   void initState() {
     super.initState();
@@ -58,6 +67,16 @@ class EditItemScreenState extends State<EditItemScreen> {
         _priceControllers.add(priceController);
         _selectedPortionTypes.add(variation.portionType);
       }
+    }
+
+    if(widget.item.offer != null){
+      hasOffer = true;
+      isOfferActive = widget.item.offer!.isEnabled;
+      offerDiscountValue.text = widget.item.offer!.discountValue.toString();
+      offerDescription.text = widget.item.offer!.description;
+      offerStartDate = widget.item.offer!.startDate;
+      offerEndDate = widget.item.offer!.endDate;
+      selectedDiscountType = widget.item.offer!.discountType;
     }
   }
 
@@ -117,6 +136,8 @@ class EditItemScreenState extends State<EditItemScreen> {
                     _buildImageUploadSection(),
                     const SizedBox(height: 24),
                     _buildProductDetailsCard(context),
+                    const SizedBox(height: 20),
+                    _buildOfferSection(),
                     const SizedBox(height: 24),
                     _buildVariationsSection(),
                   ],
@@ -408,46 +429,62 @@ class EditItemScreenState extends State<EditItemScreen> {
     );
   }
 
-  Widget _buildVariationsSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Item Variations',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+ Widget _buildVariationsSection() {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.1),
+          spreadRadius: 1,
+          blurRadius: 10,
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Item Variations',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
-              ElevatedButton.icon(
-                onPressed: _addVariation,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Variation'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black87,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+            ),
+            Switch(
+              value: hasVariations,
+              onChanged: (value) {
+                setState(() {
+                  hasVariations = value;
+                  if (!value) {
+                    _quantityControllers.clear();
+                    _priceControllers.clear();
+                    _selectedPortionTypes.clear();
+                  }
+                });
+              },
+              activeColor: Colors.black87,
+            ),
+          ],
+        ),
+        if (hasVariations) ...[
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _addVariation,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Variation'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black87,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+            ),
           ),
           if (_quantityControllers.isEmpty) ...[
             const SizedBox(height: 16),
@@ -500,12 +537,16 @@ class EditItemScreenState extends State<EditItemScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             focusedBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black, width: 2.0),
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 2.0),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
                             ),
                             enabledBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide:
+                                  BorderSide(color: Colors.grey, width: 1.0),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
                             ),
                             labelStyle: const TextStyle(color: Colors.black),
                           ),
@@ -560,9 +601,11 @@ class EditItemScreenState extends State<EditItemScreen> {
             );
           }),
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
 
   void _removeImage(int index) {
     setState(() {
@@ -617,26 +660,44 @@ class EditItemScreenState extends State<EditItemScreen> {
   }
 
   void _submitItem() async {
-    if (_formKey.currentState!.validate()) {
-      if (selectedImages.isEmpty) {
-        showCustomSnackbar(context, 'Please select at least one image',
-            isError: true);
-        return;
+  if (_formKey.currentState!.validate()) {
+    if (selectedImages.isEmpty) {
+      showCustomSnackbar(context, 'Please select at least one image', isError: true);
+      return;
+    }
+
+    setState(() {
+      loading = true;
+    });
+
+    try {
+      // Create offer model
+      OfferModel? offer;
+      if (hasOffer) {
+        if (offerDiscountValue.text.isEmpty ||
+            offerDescription.text.isEmpty ||
+            offerStartDate == null ||
+            offerEndDate == null) {
+          showCustomSnackbar(context, 'Please fill all offer details', isError: true);
+          setState(() {
+            loading = false;
+          });
+          return;
+        }
+
+        offer = OfferModel(
+          isEnabled: isOfferActive,
+          discountType: selectedDiscountType,
+          discountValue: double.parse(offerDiscountValue.text),
+          startDate: offerStartDate!,
+          endDate: offerEndDate!,
+          description: offerDescription.text,
+        );
       }
 
-      if (_quantityControllers.isEmpty) {
-        showCustomSnackbar(context, 'Please add at least one variation',
-            isError: true);
-        return;
-      }
-
-      setState(() {
-        loading = true;
-      });
-
-      try {
-        // Create variations list
-        List<VariationModel> variations = [];
+      // Create variations list if any
+      List<VariationModel> variations = [];
+      if (_quantityControllers.isNotEmpty) {
         for (int i = 0; i < _quantityControllers.length; i++) {
           variations.add(VariationModel(
             id: DateTime.now().millisecondsSinceEpoch.toString() + i.toString(),
@@ -645,33 +706,253 @@ class EditItemScreenState extends State<EditItemScreen> {
             price: double.parse(_priceControllers[i].text),
           ));
         }
-
-        // Separate image URLs and new image files
-        List<String> imageUrls = selectedImages.whereType<String>().toList();
-        List<String> newImagePaths =
-            selectedImages.whereType<File>().map((file) => file.path).toList();
-
-        // Dispatch the update event
-        context.read<ItemBloc>().add(UpdateItemEvent(
-              widget.item.copyWith(
-                name: _itemName.text.toUpperCase(),
-                categoryId: selectedCategory!,
-                price: double.parse(_amount.text),
-                description: _description.text,
-                imageUrls: imageUrls + newImagePaths,
-                variations: variations,
-              ),
-            ));
-      } catch (e) {
-        setState(() {
-          loading = false;
-        });
-        showCustomSnackbar(context, 'Error updating item: ${e.toString()}',
-            isError: true);
       }
+
+      // Separate image URLs and new image files
+      List<String> imageUrls = selectedImages.whereType<String>().toList();
+      List<String> newImagePaths =
+          selectedImages.whereType<File>().map((file) => file.path).toList();
+
+      // Dispatch the update event
+      context.read<ItemBloc>().add(UpdateItemEvent(
+            widget.item.copyWith(
+              name: _itemName.text.toUpperCase(),
+              categoryId: selectedCategory!,
+              price: double.parse(_amount.text),
+              description: _description.text,
+              imageUrls: imageUrls + newImagePaths,
+              variations: variations.isNotEmpty ? variations : null,
+              offer: offer,
+            ),
+          ));
+    } catch (e) {
+      setState(() {
+        loading = false;
+      });
+      showCustomSnackbar(context, 'Error updating item: ${e.toString()}', isError: true);
     }
   }
+}
 
+  // Add this method to build the offer section
+  Widget _buildOfferSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Offer Details',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Enable Offer Switch
+          SwitchListTile(
+            title: Text(
+              'Enable Offer',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            value: hasOffer,
+            onChanged: (bool value) {
+              setState(() {
+                hasOffer = value;
+                if (!value) {
+                  // Clear offer data when disabled
+                  offerDiscountValue.clear();
+                  offerDescription.clear();
+                  offerStartDate = null;
+                  offerEndDate = null;
+                  selectedDiscountType = DiscountType.percentage;
+                  isOfferActive = false;
+                }
+              });
+            },
+            activeColor: Colors.black87,
+          ),
+
+          if (hasOffer) ...[
+             SwitchListTile(
+              title: Text(
+                'Offer Status',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                isOfferActive ? 'Active' : 'Inactive',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: isOfferActive ? Colors.green : Colors.red,
+                ),
+              ),
+              value: isOfferActive,
+              onChanged: (bool value) {
+                setState(() {
+                  isOfferActive = value;
+                });
+              },
+              activeColor: Colors.black87,
+            ),
+
+            const SizedBox(height: 20),
+            const SizedBox(height: 20),
+
+            // Discount Type
+            DropdownButtonFormField<DiscountType>(
+              value: selectedDiscountType,
+              decoration: InputDecoration(
+                labelText: 'Discount Type',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: DiscountType.values.map((type) {
+                return DropdownMenuItem(
+                  value: type,
+                  child: Text(type.name.toUpperCase()),
+                );
+              }).toList(),
+              onChanged: (DiscountType? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    selectedDiscountType = newValue;
+                  });
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Discount Value
+            CustomTextfield(
+              controller: offerDiscountValue,
+              labelText: selectedDiscountType == DiscountType.percentage
+                  ? 'Discount (%)'
+                  : 'Discount Amount',
+              hintText: selectedDiscountType == DiscountType.percentage
+                  ? 'Enter percentage'
+                  : 'Enter amount',
+              keyboardType: TextInputType.number,
+              isPassword: false,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Required';
+                final number = double.tryParse(value);
+                if (number == null) return 'Enter valid number';
+                if (selectedDiscountType == DiscountType.percentage &&
+                    number > 100) {
+                  return 'Percentage cannot exceed 100';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Date Range
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Start Date',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text: offerStartDate?.toString().split(' ')[0] ?? '',
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: offerStartDate ?? DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() {
+                          offerStartDate = date;
+                        });
+                      }
+                    },
+                    validator: (value) =>
+                        offerStartDate == null ? 'Required' : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'End Date',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text: offerEndDate?.toString().split(' ')[0] ?? '',
+                    ),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: offerEndDate ?? DateTime.now(),
+                        firstDate: offerStartDate ?? DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() {
+                          offerEndDate = date;
+                        });
+                      }
+                    },
+                    validator: (value) =>
+                        offerEndDate == null ? 'Required' : null,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Offer Description
+            CustomTextfield(
+              controller: offerDescription,
+              labelText: 'Offer Description',
+              hintText: 'Enter offer details',
+              maxLines: 3,
+              isPassword: false,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Required';
+                return null;
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
   void _addVariation() {
     setState(() {
       _quantityControllers.add(TextEditingController());
@@ -695,6 +976,8 @@ class EditItemScreenState extends State<EditItemScreen> {
     _itemName.dispose();
     _amount.dispose();
     _description.dispose();
+    offerDiscountValue.dispose();
+      offerDescription.dispose();
     for (var controller in _quantityControllers) {
       controller.dispose();
     }
