@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
+import 'package:hot_diamond_admin/src/enum/discount_type.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
+import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
+import 'package:hot_diamond_admin/src/screens/add_items/edit_item/edit_item_screen.dart';
 import 'package:hot_diamond_admin/src/screens/item_details/item_details.dart';
 import 'package:hot_diamond_admin/src/screens/list_of_items/widgets/category_list.dart';
-import 'package:hot_diamond_admin/src/screens/list_of_items/widgets/edit_item_dialog.dart';
 import 'package:hot_diamond_admin/src/services/firebase_category_service/firebase_category_service.dart';
 import 'package:hot_diamond_admin/utils/style/custom_text_styles.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_alert_dialog.dart';
@@ -22,6 +24,42 @@ class ListOfItems extends StatefulWidget {
 
 class _ListOfItemsState extends State<ListOfItems> {
   String selectedCategoryId = '';
+
+  bool isOfferValid(OfferModel? offer) {
+    if (offer == null || !offer.isEnabled) {
+      return false;
+    }
+    final now = DateTime.now();
+    return now.isAfter(offer.startDate) && now.isBefore(offer.endDate);
+  }
+
+  double _calculateDiscountedPrice(double originalPrice, OfferModel offer) {
+    if (offer.discountType == DiscountType.percentage) {
+      return originalPrice - (originalPrice * (offer.discountValue / 100));
+    } else {
+      return originalPrice - offer.discountValue;
+    }
+  }
+
+  double _getFinalPrice(ItemModel item) {
+    double finalPrice = item.price;
+
+    if (isOfferValid(item.offer)) {
+      finalPrice = _calculateDiscountedPrice(item.price, item.offer!);
+    }
+
+    if (item.variations.isNotEmpty) {
+      finalPrice = item.variations.map((variation) {
+        double variationPrice = variation.price;
+        if (isOfferValid(item.offer)) {
+          variationPrice = _calculateDiscountedPrice(variation.price, item.offer!);
+        }
+        return variationPrice;
+      }).reduce((a, b) => a < b ? a : b); // Get the minimum price among variations
+    }
+
+    return finalPrice;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,11 +198,14 @@ class _ListOfItemsState extends State<ListOfItems> {
   Widget _buildFilteredItems(List<ItemModel> items) {
     final filteredItems =
         items.where((item) => item.categoryId == selectedCategoryId).toList();
-        if(filteredItems.isEmpty){
-          return const Center(
-            child: Text('No items available',style: CustomTextStyles.profilePhone,),
-          );
-        }
+    if (filteredItems.isEmpty) {
+      return const Center(
+        child: Text(
+          'No items available',
+          style: CustomTextStyles.profilePhone,
+        ),
+      );
+    }
 
     return GridView.builder(
       padding: const EdgeInsets.all(16),
@@ -180,6 +221,8 @@ class _ListOfItemsState extends State<ListOfItems> {
   }
 
   Widget _buildItemCard(ItemModel item) {
+    final finalPrice = _getFinalPrice(item);
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -211,23 +254,22 @@ class _ListOfItemsState extends State<ListOfItems> {
                       borderRadius:
                           const BorderRadius.vertical(top: Radius.circular(12)),
                       child: Image.network(
-                        item.imageUrl, 
+                        item.imageUrl,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) {
-                            return child; 
+                            return child;
                           }
                           return Image.asset(
-                            'assets/—Pngtree—gray network placeholder_6398266.png', 
+                            'assets/—Pngtree—gray network placeholder_6398266.png',
                             fit: BoxFit.cover,
                             width: double.infinity,
                           );
                         },
                         errorBuilder: (context, error, stackTrace) {
                           return Image.asset(
-                            'assets/—Pngtree—gray network placeholder_6398266.png', 
+                            'assets/—Pngtree—gray network placeholder_6398266.png',
                             fit: BoxFit.cover,
                             width: double.infinity,
                           );
@@ -244,20 +286,34 @@ class _ListOfItemsState extends State<ListOfItems> {
                           item.name,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontSize: 15,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 5),
                         Text(
-                          '₹${item.price.toStringAsFixed(2)}',
+                          item.variations.isNotEmpty
+                              ? 'From Rs.${finalPrice.toStringAsFixed(2)}'
+                              : 'Rs.${finalPrice.toStringAsFixed(2)}',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontSize: 12,
                             color: Colors.black87,
                           ),
                         ),
+                        if (isOfferValid(item.offer)) ...[
+                          const SizedBox(width: 2),
+                          Text( 
+                            '₹${item.price.toStringAsFixed(2)}',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: Colors.grey,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -295,7 +351,7 @@ class _ListOfItemsState extends State<ListOfItems> {
             value: 'edit',
             onTap: () => showDialog(
               context: context,
-              builder: (context) => EditItemDialog(item: item),
+              builder: (context) => EditItemScreen(item: item),
             ),
             child: const Row(
               children: [

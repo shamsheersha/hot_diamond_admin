@@ -1,3 +1,4 @@
+import 'package:hot_diamond_admin/src/enum/discount_type.dart';
 import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
 
@@ -73,5 +74,30 @@ class ItemModel {
           .toList() ?? [],
       offer: map['offer'] != null ? OfferModel.fromMap(map['offer']) : null,
     );
+  }
+
+  // Add helper methods for offer calculations
+  bool get hasValidOffer {
+    if (offer == null || !offer!.isEnabled) return false;
+    final now = DateTime.now();
+    return now.isAfter(offer!.startDate) && now.isBefore(offer!.endDate);
+  }
+
+  double calculateDiscountedPrice(double originalPrice) {
+    if (!hasValidOffer) return originalPrice;
+    
+    if (offer!.discountType == DiscountType.percentage) {
+      return originalPrice - (originalPrice * (offer!.discountValue / 100));
+    } else {
+      return originalPrice - offer!.discountValue;
+    }
+  }
+
+  double get finalPrice {
+    double basePrice = price;
+    if (variations.isNotEmpty) {
+      basePrice = variations.map((v) => v.price).reduce((a, b) => a < b ? a : b);
+    }
+    return hasValidOffer ? calculateDiscountedPrice(basePrice) : basePrice;
   }
 }

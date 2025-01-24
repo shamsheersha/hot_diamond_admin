@@ -9,6 +9,7 @@ import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
 import 'package:hot_diamond_admin/src/enum/discount_type.dart';
 import 'package:hot_diamond_admin/src/model/category_model/category_model.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
 import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
 import 'package:hot_diamond_admin/src/screens/add_items/edit_item/edit_item_screen.dart';
 import 'package:hot_diamond_admin/utils/style/custom_text_styles.dart';
@@ -36,16 +37,24 @@ class ItemDetails extends StatelessWidget {
     }
   }
 
-  List<VariationModel> _applyDiscountToVariations(List<VariationModel> variations, OfferModel offer) {
-    return variations.map((variation) {
-      final discountedPrice = _calculateDiscountedPrice(variation.price, offer);
-      return VariationModel(
-        id: variation.id,
-        quantity: variation.quantity,
-        portionType: variation.portionType,
-        price: discountedPrice,
-      );
-    }).toList();
+  double _getFinalPrice(ItemModel item) {
+    double finalPrice = item.price;
+
+    if (isOfferValid(item.offer)) {
+      finalPrice = _calculateDiscountedPrice(item.price, item.offer!);
+    }
+
+    if (item.variations.isNotEmpty) {
+      finalPrice = item.variations.map((variation) {
+        double variationPrice = variation.price;
+        if (isOfferValid(item.offer)) {
+          variationPrice = _calculateDiscountedPrice(variation.price, item.offer!);
+        }
+        return variationPrice;
+      }).reduce((a, b) => a < b ? a : b); // Get the minimum price among variations
+    }
+
+    return finalPrice;
   }
 
   @override
@@ -135,13 +144,7 @@ class ItemDetails extends StatelessWidget {
             return Center(child: Text(state.message));
           } else if (state is ItemLoaded) {
             final item = state.items.firstWhere((item) => item.id == itemId);
-            final hasValidOffer = isOfferValid(item.offer);
-            final discountedPrice = hasValidOffer && item.variations.isEmpty
-                ? _calculateDiscountedPrice(item.price, item.offer!)
-                : null;
-            final discountedVariations = hasValidOffer && item.variations.isNotEmpty
-                ? _applyDiscountToVariations(item.variations, item.offer!)
-                : item.variations;
+            final finalPrice = _getFinalPrice(item);
 
             return Padding(
               padding: const EdgeInsets.all(16.0),
@@ -150,83 +153,84 @@ class ItemDetails extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Image Carousel
-                    Stack(
-                      children: [
-                        CarouselSlider.builder(
-                          itemCount: item.imageUrls.length,
-                          itemBuilder: (context, index, realIndex) {
-                            return Container(
-                              height: 300,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.network(
-                                  item.imageUrls[index],
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Center(
-                                      child: Image.asset(
+                    if (item.imageUrls.isNotEmpty)
+                      Stack(
+                        children: [
+                          CarouselSlider.builder(
+                            itemCount: item.imageUrls.length,
+                            itemBuilder: (context, index, realIndex) {
+                              return Container(
+                                height: 300,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.network(
+                                    item.imageUrls[index],
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Center(
+                                        child: Image.asset(
+                                          'assets/—Pngtree—gray network placeholder_6398266.png',
+                                          fit: BoxFit.cover,
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
                                         'assets/—Pngtree—gray network placeholder_6398266.png',
                                         fit: BoxFit.cover,
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Image.asset(
-                                      'assets/—Pngtree—gray network placeholder_6398266.png',
-                                      fit: BoxFit.cover,
-                                    );
-                                  },
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          options: CarouselOptions(
-                            autoPlay: true,
-                            enlargeCenterPage: true,
-                            aspectRatio: 16 / 9,
-                            viewportFraction: 0.9,
+                              );
+                            },
+                            options: CarouselOptions(
+                              autoPlay: true,
+                              enlargeCenterPage: true,
+                              aspectRatio: 16 / 9,
+                              viewportFraction: 0.9,
+                            ),
                           ),
-                        ),
-                        if (hasValidOffer)
-                          Positioned(
-                            top: 04,
-                            right: 22,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                item.offer!.discountType == DiscountType.percentage
-                                    ? '${item.offer!.discountValue.toStringAsFixed(0)}% OFF'
-                                    : '₹${item.offer!.discountValue} OFF',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                          if (isOfferValid(item.offer))
+                            Positioned(
+                              top: 04,
+                              right: 22,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  item.offer!.discountType == DiscountType.percentage
+                                      ? '${item.offer!.discountValue.toStringAsFixed(0)}% OFF'
+                                      : '₹${item.offer!.discountValue} OFF',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
+                        ],
+                      ),
 
                     const SizedBox(height: 24),
 
@@ -267,32 +271,25 @@ class ItemDetails extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              if (hasValidOffer && item.variations.isEmpty) ...[
-                                Text(
-                                  '₹${discountedPrice!.toStringAsFixed(2)}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
+                              Text(
+                                item.variations.isNotEmpty
+                                    ? 'from Rs.${finalPrice.toStringAsFixed(2)}'
+                                    : 'Rs.${finalPrice.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
                                 ),
+                              ),
+                              if (isOfferValid(item.offer) && item.variations.isEmpty) ...[
                                 const SizedBox(width: 8),
                                 Text(
                                   '₹${item.price.toStringAsFixed(2)}',
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.grey[600],
+                                    color: Colors.grey,
                                     decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                              ] else ...[
-                                Text(
-                                  '₹${item.price.toStringAsFixed(2)}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
                                   ),
                                 ),
                               ],
@@ -304,7 +301,7 @@ class ItemDetails extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // Description Card
+                    // Description
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -346,12 +343,12 @@ class ItemDetails extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Variations Section
-                    _buildVariationsSection(discountedVariations, hasValidOffer, item.offer),
+                    _buildVariationsSection(item.variations, isOfferValid(item.offer), item.offer),
 
                     const SizedBox(height: 20),
 
                     // Offer Details (if active)
-                    if (hasValidOffer) _buildOfferDetails(item.offer!),
+                    if (isOfferValid(item.offer)) _buildOfferDetails(item.offer!),
                   ],
                 ),
               ),
@@ -359,59 +356,6 @@ class ItemDetails extends StatelessWidget {
           }
           return Container();
         },
-      ),
-    );
-  }
-
-  Widget _buildOfferDetails(OfferModel offer) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.red.shade200,
-          width: 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.local_offer_outlined,
-                color: Colors.red.shade700,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Active Offer',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.red.shade700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            offer.description,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.red.shade900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Valid till ${offer.endDate.toString().split(' ')[0]}',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.red.shade700,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -484,6 +428,59 @@ class ItemDetails extends StatelessWidget {
               ),
             );
           }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferDetails(OfferModel offer) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.red.shade200,
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.local_offer_outlined,
+                color: Colors.red.shade700,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Active Offer',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            offer.description,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.red.shade900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Valid till ${offer.endDate.toString().split(' ')[0]}',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.red.shade900,
+            ),
+          ),
         ],
       ),
     );

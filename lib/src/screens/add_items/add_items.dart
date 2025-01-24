@@ -429,6 +429,7 @@ class AddItemScreenState extends State<AddItemScreen> {
                     if (state is CategoryLoaded) {
                       return DropdownButtonFormField<String>(
                         value: selectedCategory,
+                        isExpanded: true,
                         decoration: InputDecoration(
                           labelText: 'Category',
                           prefixIcon: const Icon(Icons.category_outlined),
@@ -969,6 +970,7 @@ class AddItemScreenState extends State<AddItemScreen> {
 
   @override
   void dispose() {
+    
     for (var controller in _quantityControllers) {
       controller.dispose();
     }

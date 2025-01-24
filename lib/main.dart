@@ -7,21 +7,24 @@ import 'package:hot_diamond_admin/src/controllers/category/category_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/login/login_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/order/order_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/order/order_event.dart';
 import 'package:hot_diamond_admin/src/controllers/splash/splash_bloc.dart';
 import 'package:hot_diamond_admin/src/screens/splash/splash.dart';
 import 'package:hot_diamond_admin/src/services/firebase_category_service/firebase_category_service.dart';
 import 'package:hot_diamond_admin/src/services/firebase_item_service/firebase_item_service.dart';
 import 'package:hot_diamond_admin/src/services/image_cloudinary_service/image_cloudinary_service.dart';
+import 'package:hot_diamond_admin/src/services/order_service/order_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await dotenv.load(fileName: '.env');
-  
+
   // Initialize services
   final categoryService = FirebaseCategoryService();
   await categoryService.fetchCategories(); // Pre-fetch categories
-  
+
   runApp(const MyApp());
 }
 
@@ -30,7 +33,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ImageCloudinaryService imageCloudinaryService = ImageCloudinaryService();
+    final ImageCloudinaryService imageCloudinaryService =
+        ImageCloudinaryService();
     final FirebaseItemService firebaseItemService = FirebaseItemService();
     return MultiBlocProvider(
         providers: [
@@ -42,10 +46,17 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) => CategoryBloc(FirebaseCategoryService())
-              ..add(FetchCategories()), // This will populate the categoryIdToName map
+              ..add(
+                  FetchCategories()), // This will populate the categoryIdToName map
           ),
           BlocProvider(
-            create: (context) => ItemBloc(imageCloudinaryService,firebaseItemService)..add(FetchItemsEvent()),
+            create: (context) =>
+                ItemBloc(imageCloudinaryService, firebaseItemService)
+                  ..add(FetchItemsEvent()),
+          ),
+          BlocProvider(
+            create: (context) =>
+                AdminOrderBloc(OrderServices())..add(FetchAllOrders()),
           )
         ],
         child: MaterialApp(
@@ -55,7 +66,9 @@ class MyApp extends StatelessWidget {
               appBarTheme: const AppBarTheme(
                 color: Colors.transparent,
               ),
-              textSelectionTheme: const TextSelectionThemeData(selectionHandleColor: Colors.black,),
+              textSelectionTheme: const TextSelectionThemeData(
+                selectionHandleColor: Colors.black,
+              ),
               scaffoldBackgroundColor: Colors.grey[100]),
           debugShowCheckedModeBanner: false,
           home: const Splash(),
