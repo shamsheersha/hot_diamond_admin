@@ -7,7 +7,7 @@ import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
 import 'package:hot_diamond_admin/src/enum/discount_type.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
 import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
-import 'package:hot_diamond_admin/src/screens/add_items/edit_item/edit_item_screen.dart';
+import 'package:hot_diamond_admin/src/screens/edit_item/edit_item_screen.dart';
 import 'package:hot_diamond_admin/src/screens/item_details/item_details.dart';
 import 'package:hot_diamond_admin/src/screens/list_of_items/widgets/category_list.dart';
 import 'package:hot_diamond_admin/src/services/firebase_category_service/firebase_category_service.dart';
@@ -52,10 +52,12 @@ class _ListOfItemsState extends State<ListOfItems> {
       finalPrice = item.variations.map((variation) {
         double variationPrice = variation.price;
         if (isOfferValid(item.offer)) {
-          variationPrice = _calculateDiscountedPrice(variation.price, item.offer!);
+          variationPrice =
+              _calculateDiscountedPrice(variation.price, item.offer!);
         }
         return variationPrice;
-      }).reduce((a, b) => a < b ? a : b); // Get the minimum price among variations
+      }).reduce(
+          (a, b) => a < b ? a : b); // Get the minimum price among variations
     }
 
     return finalPrice;
@@ -302,18 +304,34 @@ class _ListOfItemsState extends State<ListOfItems> {
                             color: Colors.black87,
                           ),
                         ),
-                        if (isOfferValid(item.offer)) ...[
-                          const SizedBox(width: 2),
-                          Text( 
-                            '₹${item.price.toStringAsFixed(2)}',
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (isOfferValid(item.offer)) ...[
+                              Text(
+                                '₹${item.price.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
+                            if (!item.isInStock)
+                          Text(
+                            'Out of Stock',
                             style: GoogleFonts.poppins(
+                              color: Colors.red,
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: Colors.grey,
-                              decoration: TextDecoration.lineThrough,
+                              fontSize: 12
                             ),
                           ),
-                        ],
+                          ],
+                        )
                       ],
                     ),
                   ),

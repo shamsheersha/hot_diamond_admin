@@ -80,6 +80,7 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         imageUrls: updatedImageUrls, // Use the complete list of image URLs
         variations: event.item.variations,
         offer: event.item.offer,
+        isInStock: event.item.isInStock
       );
 
       await _firebaseItemService.updateItem(updatedItem);

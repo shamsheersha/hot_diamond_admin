@@ -22,8 +22,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     // Simulate delay for loading
     await Future.delayed(const Duration(seconds: 1));
 
-    if (event.username == 'admin@1' &&
-        event.password == '123') {
+    if (event.username == 'hotdiamonduser' &&
+        event.password == 'hotdiamonduser') {
           log('lodded');
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn',true);

@@ -16,7 +16,7 @@ class AdminOrderLoading extends AdminOrderState {}
 class AdminOrdersLoaded extends AdminOrderState {
   final List<OrderModel> orders;
 
-  AdminOrdersLoaded(this.orders);
+  const AdminOrdersLoaded(this.orders);
 
   @override
   List<Object> get props => [orders];

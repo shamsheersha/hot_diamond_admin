@@ -17,7 +17,8 @@ class OfferSection extends StatelessWidget {
   final ValueChanged<DateTime> onStartDateChanged;
   final ValueChanged<DateTime> onEndDateChanged;
 
-  const OfferSection({super.key,
+  const OfferSection({
+    super.key,
     required this.hasOffer,
     required this.offerDiscountValue,
     required this.offerDescription,
@@ -179,37 +180,61 @@ class OfferSection extends StatelessWidget {
   }
 
   Widget _buildDateField({
-    required BuildContext context,
-    required String label,
-    required DateTime? initialDate,
-    required ValueChanged<DateTime> onDateSelected,
-  }) {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        suffixIcon: const Icon(Icons.calendar_today),
+  required BuildContext context,
+  required String label,
+  required DateTime? initialDate,
+  required ValueChanged<DateTime> onDateSelected,
+}) {
+  return TextFormField(
+    decoration: InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-      readOnly: true,
-      controller: TextEditingController(
-        text: initialDate?.toString().split(' ')[0] ?? '',
+      suffixIcon: const Icon(Icons.calendar_today),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.black, width: 2.0),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
-      onTap: () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: initialDate ?? DateTime.now(),
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-        );
-        if (date != null) {
-          onDateSelected(date);
-        }
-      },
-      validator: (value) => initialDate == null ? 'Required' : null,
-    );
-  }
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey, width: 1.0),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
+      labelStyle: const TextStyle(color: Colors.black),
+    ),
+    readOnly: true,
+    controller: TextEditingController(
+      text: initialDate?.toString().split(' ')[0] ?? '',
+    ),
+    onTap: () async {
+      final firstDate = DateTime.now();
+      final date = await showDatePicker(
+        context: context,
+        initialDate: initialDate != null && !initialDate.isBefore(firstDate)
+            ? initialDate
+            : firstDate,
+        firstDate: firstDate,
+        lastDate: DateTime.now().add(const Duration(days: 365)),
+        builder: (context, child) {
+          return Theme(
+            data: ThemeData.light().copyWith(
+              colorScheme: const ColorScheme.light(
+                  primary: Colors.red,
+                  onPrimary: Colors.white,
+                  onSurface: Colors.black),
+            ),
+            child: child!,
+          );
+        },
+      );
+      if (date != null) {
+        onDateSelected(date);
+      }
+    },
+    validator: (value) => initialDate == null ? 'Required' : null,
+  );
+}
+
 
   Widget _buildOfferDescriptionField() {
     return CustomTextfield(

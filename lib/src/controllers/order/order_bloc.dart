@@ -10,6 +10,7 @@ class AdminOrderBloc extends Bloc<AdminOrderEvent, AdminOrderState> {
   AdminOrderBloc(this._orderServices) : super(AdminOrderInitial()) {
     on<FetchAllOrders>(_onFetchAllOrders);
     on<UpdateOrderStatus>(_onUpdateOrderStatus);
+    on<FetchOrdersByDate>(onFetchOrdersByDate);
   }
 
   Future<void> _onFetchAllOrders(
@@ -35,6 +36,19 @@ class AdminOrderBloc extends Bloc<AdminOrderEvent, AdminOrderState> {
         newStatus: event.newStatus,
       );
       add(FetchAllOrders()); // Refresh orders after update
+    } catch (error) {
+      emit(AdminOrderFailure(error.toString()));
+    }
+  }
+
+
+  Future onFetchOrdersByDate(
+    FetchOrdersByDate event,Emitter<AdminOrderState> emit,
+  )async{
+    emit(AdminOrderLoading());
+    try {
+      final orders = await _orderServices.fetchOrdersByDate(event.startDate, event.endDate);
+      emit(AdminOrdersLoaded(orders));
     } catch (error) {
       emit(AdminOrderFailure(error.toString()));
     }

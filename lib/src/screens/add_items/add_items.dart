@@ -892,6 +892,15 @@ class AddItemScreenState extends State<AddItemScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       suffixIcon: const Icon(Icons.calendar_today),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black, width: 2.0),
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      labelStyle: const TextStyle(color: Colors.black),
                     ),
                     readOnly: true,
                     controller: TextEditingController(
@@ -903,6 +912,17 @@ class AddItemScreenState extends State<AddItemScreen> {
                         initialDate: DateTime.now(),
                         firstDate: DateTime.now(),
                         lastDate: DateTime.now().add(const Duration(days: 365)),
+                        builder: (context, child) {
+                          return Theme(
+                            data: ThemeData.light().copyWith(
+                              colorScheme: const ColorScheme.light(
+                                  primary: Colors.red,
+                                  onPrimary: Colors.white,
+                                  onSurface: Colors.black),
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
                       if (date != null) {
                         setState(() {
@@ -923,6 +943,15 @@ class AddItemScreenState extends State<AddItemScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       suffixIcon: const Icon(Icons.calendar_today),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black, width: 2.0),
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      labelStyle: const TextStyle(color: Colors.black),
                     ),
                     readOnly: true,
                     controller: TextEditingController(
@@ -934,6 +963,17 @@ class AddItemScreenState extends State<AddItemScreen> {
                         initialDate: offerStartDate ?? DateTime.now(),
                         firstDate: offerStartDate ?? DateTime.now(),
                         lastDate: DateTime.now().add(const Duration(days: 365)),
+                        builder: (context, child) {
+                          return Theme(
+                            data: ThemeData.light().copyWith(
+                              colorScheme: const ColorScheme.light(
+                                  primary: Colors.red,
+                                  onPrimary: Colors.white,
+                                  onSurface: Colors.black),
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
                       if (date != null) {
                         setState(() {
@@ -970,7 +1010,6 @@ class AddItemScreenState extends State<AddItemScreen> {
 
   @override
   void dispose() {
-    
     for (var controller in _quantityControllers) {
       controller.dispose();
     }

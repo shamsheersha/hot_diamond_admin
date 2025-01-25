@@ -16,8 +16,8 @@ class SharedPrefsHelper {
   // Get stored credentials
   static Future<AdminCredentials> getCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    final username = prefs.getString(usernameKey) ?? 'admin@1';
-    final password = prefs.getString(passwordKey) ?? '123';
+    final username = prefs.getString(usernameKey) ?? 'hotdiamonduser';
+    final password = prefs.getString(passwordKey) ?? 'hotdiamonduser';
     return AdminCredentials(username: username, password: password);
   }
 

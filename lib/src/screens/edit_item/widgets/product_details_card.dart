@@ -12,13 +12,18 @@ class ProductDetailsCard extends StatelessWidget {
   final TextEditingController descriptionController;
   final String? selectedCategory;
   final ValueChanged<String?> onCategoryChanged;
+  final bool isInStock;
+  final ValueChanged<bool> onStockChanged;
 
-  const ProductDetailsCard({super.key, 
+  const ProductDetailsCard({
+    super.key,
     required this.itemNameController,
     required this.amountController,
     required this.descriptionController,
     required this.selectedCategory,
     required this.onCategoryChanged,
+    required this.isInStock,
+    required this.onStockChanged,
   });
 
   @override
@@ -39,12 +44,22 @@ class ProductDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Product Details',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Product Details',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Switch(
+                value: isInStock,
+                onChanged: onStockChanged,
+                activeColor: Colors.green,
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           _buildItemNameField(),

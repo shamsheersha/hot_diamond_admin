@@ -13,10 +13,10 @@ import 'package:hot_diamond_admin/src/enum/portion_type.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
 import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
-import 'package:hot_diamond_admin/src/screens/add_items/edit_item/widgets/image_upload_section.dart';
-import 'package:hot_diamond_admin/src/screens/add_items/edit_item/widgets/offer_section.dart';
-import 'package:hot_diamond_admin/src/screens/add_items/edit_item/widgets/product_details_card.dart';
-import 'package:hot_diamond_admin/src/screens/add_items/edit_item/widgets/variation_section.dart';
+import 'package:hot_diamond_admin/src/screens/edit_item/widgets/image_upload_section.dart';
+import 'package:hot_diamond_admin/src/screens/edit_item/widgets/offer_section.dart';
+import 'package:hot_diamond_admin/src/screens/edit_item/widgets/product_details_card.dart';
+import 'package:hot_diamond_admin/src/screens/edit_item/widgets/variation_section.dart';
 
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
 
@@ -48,6 +48,7 @@ class EditItemScreenState extends State<EditItemScreen> {
   DateTime? offerEndDate;
   DiscountType selectedDiscountType = DiscountType.percentage;
   bool isOfferActive = true;
+  bool isInStock = true;
 
   @override
   void initState() {
@@ -62,7 +63,7 @@ class EditItemScreenState extends State<EditItemScreen> {
     selectedCategory = widget.item.categoryId;
     selectedImages = widget.item.imageUrls;
     hasVariations = widget.item.variations.isNotEmpty;
-
+    isInStock = widget.item.isInStock;
     if (hasVariations) {
       for (var variation in widget.item.variations) {
         _quantityControllers.add(TextEditingController(text: variation.quantity.toString()));
@@ -163,7 +164,14 @@ class EditItemScreenState extends State<EditItemScreen> {
                   selectedCategory = value;
                 });
               },
+              isInStock: isInStock,
+              onStockChanged: (value){
+                setState(() {
+                  isInStock = value;
+                });
+              },
             ),
+            
             const SizedBox(height: 20),
             OfferSection(
               hasOffer: hasOffer,
@@ -336,6 +344,7 @@ class EditItemScreenState extends State<EditItemScreen> {
                 imageUrls: imageUrls + newImagePaths,
                 variations: variations.isNotEmpty ? variations : null,
                 offer: offer,
+                isInStock: isInStock
               ),
             ));
       } catch (e) {

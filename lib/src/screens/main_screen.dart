@@ -20,23 +20,20 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const ListOfItems(),
     const AddItemScreen(),
-    const NotificationScreen(),
     const ProfileScreen(),
   ];
 
   static const List<String> listOfStrings = [
     'Home',
-    'items',
+    'Items',
     'Add Item',
-    'Notifications',
-    'Profile',
+    'Settings',
   ];
 
   static const List<IconData> listOfIcons = [
     Icons.home_sharp,
     Icons.menu,
     Icons.add,
-    Icons.notifications,
     Icons.account_circle_rounded,
   ];
 
@@ -81,7 +78,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  width: isSelected ? displayWidth * 0.36 : displayWidth * 0.11,
+                  width: isSelected ? displayWidth * 0.36 : displayWidth * 0.15,
                   margin: EdgeInsets.symmetric(horizontal: displayWidth * 0.002),
                   decoration: BoxDecoration(
                     color: isSelected ? Colors.white : Colors.transparent,

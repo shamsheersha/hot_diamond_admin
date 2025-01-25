@@ -11,9 +11,9 @@ import 'package:hot_diamond_admin/src/model/category_model/category_model.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:hot_diamond_admin/src/model/item_model/item_model.dart';
 import 'package:hot_diamond_admin/src/model/offer_model/offer_model.dart';
-import 'package:hot_diamond_admin/src/screens/add_items/edit_item/edit_item_screen.dart';
+import 'package:hot_diamond_admin/src/screens/edit_item/edit_item_screen.dart';
 import 'package:hot_diamond_admin/utils/style/custom_text_styles.dart';
-import 'package:hot_diamond_admin/widgets/show_custom_alert_dialog.dart'; 
+import 'package:hot_diamond_admin/widgets/show_custom_alert_dialog.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
 
 class ItemDetails extends StatelessWidget {
@@ -21,18 +21,18 @@ class ItemDetails extends StatelessWidget {
 
   const ItemDetails({super.key, required this.itemId});
 
-  bool isOfferValid(OfferModel? offer){
-    if(offer == null || !offer.isEnabled){
+  bool isOfferValid(OfferModel? offer) {
+    if (offer == null || !offer.isEnabled) {
       return false;
     }
     final now = DateTime.now();
     return now.isAfter(offer.startDate) && now.isBefore(offer.endDate);
   }
 
-  double _calculateDiscountedPrice(double originalPrice, OfferModel offer){
-    if(offer.discountType == DiscountType.percentage){
+  double _calculateDiscountedPrice(double originalPrice, OfferModel offer) {
+    if (offer.discountType == DiscountType.percentage) {
       return originalPrice - (originalPrice * (offer.discountValue / 100));
-    }else{
+    } else {
       return originalPrice - offer.discountValue;
     }
   }
@@ -48,10 +48,12 @@ class ItemDetails extends StatelessWidget {
       finalPrice = item.variations.map((variation) {
         double variationPrice = variation.price;
         if (isOfferValid(item.offer)) {
-          variationPrice = _calculateDiscountedPrice(variation.price, item.offer!);
+          variationPrice =
+              _calculateDiscountedPrice(variation.price, item.offer!);
         }
         return variationPrice;
-      }).reduce((a, b) => a < b ? a : b); // Get the minimum price among variations
+      }).reduce(
+          (a, b) => a < b ? a : b); // Get the minimum price among variations
     }
 
     return finalPrice;
@@ -178,7 +180,8 @@ class ItemDetails extends StatelessWidget {
                                   child: Image.network(
                                     item.imageUrls[index],
                                     fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, loadingProgress) {
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
                                       if (loadingProgress == null) return child;
                                       return Center(
                                         child: Image.asset(
@@ -218,7 +221,8 @@ class ItemDetails extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  item.offer!.discountType == DiscountType.percentage
+                                  item.offer!.discountType ==
+                                          DiscountType.percentage
                                       ? '${item.offer!.discountValue.toStringAsFixed(0)}% OFF'
                                       : '₹${item.offer!.discountValue} OFF',
                                   style: GoogleFonts.poppins(
@@ -281,7 +285,8 @@ class ItemDetails extends StatelessWidget {
                                   color: Colors.black87,
                                 ),
                               ),
-                              if (isOfferValid(item.offer) && item.variations.isEmpty) ...[
+                              if (isOfferValid(item.offer) &&
+                                  item.variations.isEmpty) ...[
                                 const SizedBox(width: 8),
                                 Text(
                                   '₹${item.price.toStringAsFixed(2)}',
@@ -294,6 +299,12 @@ class ItemDetails extends StatelessWidget {
                                 ),
                               ],
                             ],
+                          ),
+                          Text(
+                            item.isInStock ? 'In Stock' : 'Out of Stock',
+                            style: TextStyle(
+                              color: item.isInStock ? Colors.green : Colors.red,
+                            ),
                           ),
                         ],
                       ),
@@ -343,12 +354,14 @@ class ItemDetails extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Variations Section
-                    _buildVariationsSection(item.variations, isOfferValid(item.offer), item.offer),
+                    _buildVariationsSection(
+                        item.variations, isOfferValid(item.offer), item.offer),
 
                     const SizedBox(height: 20),
 
                     // Offer Details (if active)
-                    if (isOfferValid(item.offer)) _buildOfferDetails(item.offer!),
+                    if (isOfferValid(item.offer))
+                      _buildOfferDetails(item.offer!),
                   ],
                 ),
               ),
@@ -360,7 +373,8 @@ class ItemDetails extends StatelessWidget {
     );
   }
 
-  Widget _buildVariationsSection(List<VariationModel> variations, bool hasValidOffer, OfferModel? offer) {
+  Widget _buildVariationsSection(
+      List<VariationModel> variations, bool hasValidOffer, OfferModel? offer) {
     if (variations.isEmpty) {
       return Container();
     }
@@ -391,7 +405,9 @@ class ItemDetails extends StatelessWidget {
           const SizedBox(height: 12),
           ...variations.map((variation) {
             final originalPrice = variation.price;
-            final discountedPrice = hasValidOffer ? _calculateDiscountedPrice(originalPrice, offer!) : null;
+            final discountedPrice = hasValidOffer
+                ? _calculateDiscountedPrice(originalPrice, offer!)
+                : null;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(

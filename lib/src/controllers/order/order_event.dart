@@ -20,3 +20,13 @@ class UpdateOrderStatus extends AdminOrderEvent {
   @override
   List<Object> get props => [orderId, newStatus];
 }
+
+class FetchOrdersByDate extends AdminOrderEvent {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const FetchOrdersByDate(this.startDate, this.endDate);
+
+  @override
+  List<Object> get props => [startDate, endDate];
+}

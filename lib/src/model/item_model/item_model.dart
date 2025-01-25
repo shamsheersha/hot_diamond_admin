@@ -11,6 +11,7 @@ class ItemModel {
   List<String> imageUrls;
   List<VariationModel> variations;
   final OfferModel? offer;
+  final bool isInStock;
 
   String get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : '';
   double get basePrice => variations.isNotEmpty ? variations.first.price : 0.0;
@@ -24,6 +25,7 @@ class ItemModel {
     this.imageUrls = const [],
     this.variations = const [],
     this.offer,
+    this.isInStock = true
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +37,7 @@ class ItemModel {
       'imageUrls': imageUrls,
       'variations': variations.map((v) => v.toMap()).toList(),
       'offer': offer?.toMap(),
+      'isInStock' : isInStock
     };
   }
 
@@ -48,6 +51,7 @@ class ItemModel {
     bool? hasVariations,
     List<VariationModel>? variations,
     OfferModel? offer,
+    bool? isInStock,
   }) {
     return ItemModel(
       id: id ?? this.id,
@@ -58,6 +62,7 @@ class ItemModel {
       imageUrls: imageUrls ?? this.imageUrls,
       variations: variations ?? this.variations,
       offer: offer,
+      isInStock: isInStock ?? this.isInStock,
     );
   }
 
@@ -73,6 +78,7 @@ class ItemModel {
           ?.map((v) => VariationModel.fromMap(v))
           .toList() ?? [],
       offer: map['offer'] != null ? OfferModel.fromMap(map['offer']) : null,
+      isInStock: map['isInStock'] ?? true,
     );
   }
 
