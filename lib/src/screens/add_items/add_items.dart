@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_diamond_admin/src/controllers/category/category_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/category/category_state.dart';
+import 'package:hot_diamond_admin/src/controllers/connectivity/connectivity_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/connectivity/connectivity_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_event.dart';
 import 'package:hot_diamond_admin/src/controllers/item/item_state.dart';
@@ -16,6 +18,7 @@ import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart
 import 'package:hot_diamond_admin/src/screens/login/widgets/custom_text_field.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -43,6 +46,11 @@ class AddItemScreenState extends State<AddItemScreen> {
   DateTime? offerEndDate;
   DiscountType selectedDiscountType = DiscountType.percentage;
   @override
+  void initState() {
+    context.read<ConnectivityBloc>().add(CheckConnectivity());
+    super.initState();
+  }
+  @override
   Widget build(BuildContext context) {
     return BlocListener<ItemBloc, ItemState>(
       listener: (context, state) {
@@ -55,8 +63,7 @@ class AddItemScreenState extends State<AddItemScreen> {
             selectedCategory = null;
             loading = false;
           });
-          showCustomSnackbar(context, 'Item added successfully',
-              isError: false);
+          showCustomSnackbar(context, 'Item added successfully', isError: false);
         } else if (state is ItemError) {
           setState(() {
             loading = false;
@@ -125,7 +132,7 @@ class AddItemScreenState extends State<AddItemScreen> {
                     ),
                   ),
                 ),
-              ),
+            ),
           ],
         ),
       ),
@@ -595,6 +602,7 @@ class AddItemScreenState extends State<AddItemScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
           ],
           const SizedBox(height: 16),
           ..._quantityControllers.asMap().entries.map((entry) {
@@ -904,7 +912,7 @@ class AddItemScreenState extends State<AddItemScreen> {
                     ),
                     readOnly: true,
                     controller: TextEditingController(
-                      text: offerStartDate?.toString().split(' ')[0] ?? '',
+                      text: offerStartDate != null ? formatDate(offerStartDate!) : '',
                     ),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -955,7 +963,7 @@ class AddItemScreenState extends State<AddItemScreen> {
                     ),
                     readOnly: true,
                     controller: TextEditingController(
-                      text: offerEndDate?.toString().split(' ')[0] ?? '',
+                      text: offerEndDate != null ? formatDate(offerEndDate!) : '',
                     ),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -1006,6 +1014,11 @@ class AddItemScreenState extends State<AddItemScreen> {
         ],
       ),
     );
+  }
+
+  String formatDate(DateTime date) {
+    final DateFormat formatter = DateFormat('dd/MM/yyyy');
+    return formatter.format(date);
   }
 
   @override

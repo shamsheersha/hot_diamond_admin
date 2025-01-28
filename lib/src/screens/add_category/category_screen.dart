@@ -20,7 +20,6 @@ class CategoryScreenState extends State<CategoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch categories when the screen initializes
     context.read<CategoryBloc>().add(FetchCategories());
   }
 
@@ -44,7 +43,7 @@ class CategoryScreenState extends State<CategoryScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // Close dialog
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -54,7 +53,7 @@ class CategoryScreenState extends State<CategoryScreen> {
                   return;
                 }
                 onSubmit(_controller.text.trim());
-                Navigator.pop(context); // Close dialog after submission
+                Navigator.pop(context);
               },
               child: const Text('Save'),
             ),
@@ -73,7 +72,7 @@ class CategoryScreenState extends State<CategoryScreen> {
         backgroundColor: Colors.grey[50],
       ),
       body: Container(
-        color: Colors.grey[100], // White background
+        color: Colors.grey[100],
         child: BlocConsumer<CategoryBloc, CategoryState>(
           listener: (context, state) {
             if (state is CategoryError) {
@@ -90,116 +89,11 @@ class CategoryScreenState extends State<CategoryScreen> {
             if (state is CategoryLoaded) {
               final categories = state.categories;
 
-              // Display empty state if no categories
               if (categories.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.category_outlined,
-                          size: 80, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No categories added yet',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildEmptyState();
               }
 
-              // Display category list
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.grey,
-                          spreadRadius: 0.5,
-                          blurRadius: 8,
-                          offset: Offset(1, 2),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.red.withOpacity(0.1),
-                        child: const Icon(Icons.category, color: Colors.red),
-                      ),
-                      title: Text(
-                        categories[index].name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_rounded),
-                            onPressed: () {
-                              _showCategoryDialog(
-                                initialText: categories[index].name,
-                                onSubmit: (updatedCategoryName) {
-                                  final updatedCategory = CategoryModel(
-                                    id: categories[index].id,
-                                    name: updatedCategoryName,
-                                  );
-                                  context.read<CategoryBloc>().add(
-                                      UpdateCategoryEvent(updatedCategory));
-                                },
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_rounded),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return CustomAlertDialog(
-                                    title: 'Delete Category',
-                                    content:
-                                        'Are you sure you want to delete this category?',
-                                    primaryButtonText: 'Delete',
-                                    primaryButtonColor: Colors.red,
-                                    secondaryButtonText: 'Cancel',
-                                    onSecondaryButtonPressed: () {
-                                      Navigator.pop(context); // Close dialog
-                                    },
-                                    onPrimaryButtonPressed: () async {
-                                      final categoryId =
-                                          categories[index].id;
-                                      final bloc =
-                                          context.read<CategoryBloc>();
-
-                                      bloc.add(DeleteCategoryEvent(categoryId));
-                                      Navigator.pop(context);
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
+              return _buildCategoryList(categories);
             }
 
             return const SizedBox.shrink();
@@ -212,13 +106,129 @@ class CategoryScreenState extends State<CategoryScreen> {
           _showCategoryDialog(
             onSubmit: (newCategoryName) {
               context.read<CategoryBloc>().add(AddCategoryEvent(
-                    CategoryModel(id: '', name: newCategoryName),
-                  ));
+                CategoryModel(id: '', name: newCategoryName),
+              ));
             },
           );
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.category_outlined, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No categories added yet',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryList(List<CategoryModel> categories) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        return _buildCategoryItem(categories[index]);
+      },
+    );
+  }
+
+  Widget _buildCategoryItem(CategoryModel category) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.grey,
+            spreadRadius: 0.5,
+            blurRadius: 8,
+            offset: Offset(1, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: Colors.red.withOpacity(0.1),
+          child: const Icon(Icons.category, color: Colors.red),
+        ),
+        title: Text(
+          category.name,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildEditButton(category),
+            _buildDeleteButton(category),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditButton(CategoryModel category) {
+    return IconButton(
+      icon: const Icon(Icons.edit_rounded),
+      onPressed: () {
+        _showCategoryDialog(
+          initialText: category.name,
+          onSubmit: (updatedCategoryName) {
+            final updatedCategory = CategoryModel(
+              id: category.id,
+              name: updatedCategoryName,
+            );
+            context.read<CategoryBloc>().add(UpdateCategoryEvent(updatedCategory));
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDeleteButton(CategoryModel category) {
+    return IconButton(
+      icon: const Icon(Icons.delete_rounded),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return CustomAlertDialog(
+              title: 'Delete Category',
+              content: 'Are you sure you want to delete this category?',
+              primaryButtonText: 'Delete',
+              primaryButtonColor: Colors.red,
+              secondaryButtonText: 'Cancel',
+              onSecondaryButtonPressed: () {
+                Navigator.pop(context);
+              },
+              onPrimaryButtonPressed: () async {
+                final categoryId = category.id;
+                final bloc = context.read<CategoryBloc>();
+                bloc.add(DeleteCategoryEvent(categoryId));
+                Navigator.pop(context);
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

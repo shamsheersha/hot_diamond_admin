@@ -22,7 +22,8 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
 
     try {
       // Upload multiple images to Cloudinary
-      final imageUrls = await _cloudinaryService.uploadImages(event.item.imageUrls);
+      final imageUrls =
+          await _cloudinaryService.uploadImages(event.item.imageUrls);
 
       // Create new item with uploaded image URLs
       final newItem = ItemModel(
@@ -46,7 +47,8 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
     }
   }
 
-  Future<void> _onUpdateItem(UpdateItemEvent event, Emitter<ItemState> emit) async {
+  Future<void> _onUpdateItem(
+      UpdateItemEvent event, Emitter<ItemState> emit) async {
     emit(ItemLoading());
 
     try {
@@ -55,44 +57,28 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
         throw Exception('Item not found');
       }
 
-      List<String> updatedImageUrls = [...existingItem.imageUrls]; // Preserve existing image URLs
+      // Find images that were in the existing item but not in the updated item
+      final removedImages = existingItem.imageUrls
+          .where((url) => !event.item.imageUrls.contains(url))
+          .toList();
 
-      // If there's a new image, update only the first image (main image)
-      if (event.item.imageUrls.isNotEmpty &&
-          !event.item.imageUrls.first.startsWith('http')) {
-        String newMainImageUrl = await _cloudinaryService.updateImage(
-          existingItem.imageUrls.isNotEmpty ? existingItem.imageUrls.first : '',
-          event.item.imageUrls.first,
-        ) ?? '';
-
-        if (newMainImageUrl.isNotEmpty) {
-          updatedImageUrls[0] = newMainImageUrl;
-        }
+      // Delete removed images from Cloudinary
+      if (removedImages.isNotEmpty) {
+        await _cloudinaryService.deleteImagesByUrls(removedImages);
       }
 
-      // Update item with all image URLs
-      final updatedItem = ItemModel(
-        id: event.item.id,
-        name: event.item.name,
-        description: event.item.description,
-        price: event.item.price,
-        categoryId: event.item.categoryId,
-        imageUrls: updatedImageUrls, // Use the complete list of image URLs
-        variations: event.item.variations,
-        offer: event.item.offer,
-        isInStock: event.item.isInStock
-      );
-
-      await _firebaseItemService.updateItem(updatedItem);
+      // Update item in Firebase
+      await _firebaseItemService.updateItem(event.item);
 
       emit(ItemUpdatedSuccess());
-      add(FetchItemsEvent());
+      add(FetchItemsEvent()); // Fetch updated items to refresh the UI
     } catch (e) {
       emit(ItemError('Failed to update item: ${e.toString()}'));
     }
   }
 
-  Future<void> _onDeleteItem(DeleteItemEvent event, Emitter<ItemState> emit) async {
+  Future<void> _onDeleteItem(
+      DeleteItemEvent event, Emitter<ItemState> emit) async {
     emit(ItemLoading());
 
     try {
@@ -116,7 +102,8 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
     }
   }
 
-  Future<void> _onFetchItems(FetchItemsEvent event, Emitter<ItemState> emit) async {
+  Future<void> _onFetchItems(
+      FetchItemsEvent event, Emitter<ItemState> emit) async {
     emit(ItemLoading());
 
     try {

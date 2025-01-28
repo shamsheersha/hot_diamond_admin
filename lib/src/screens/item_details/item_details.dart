@@ -15,6 +15,7 @@ import 'package:hot_diamond_admin/src/screens/edit_item/edit_item_screen.dart';
 import 'package:hot_diamond_admin/utils/style/custom_text_styles.dart';
 import 'package:hot_diamond_admin/widgets/show_custom_alert_dialog.dart';
 import 'package:hot_diamond_admin/src/model/variation_model/variation_model.dart';
+import 'package:intl/intl.dart';
 
 class ItemDetails extends StatelessWidget {
   final String itemId;
@@ -491,7 +492,7 @@ class ItemDetails extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Valid till ${offer.endDate.toString().split(' ')[0]}',
+  'Valid till ${formatDate(offer.endDate)}',
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: Colors.red.shade900,
@@ -501,7 +502,10 @@ class ItemDetails extends StatelessWidget {
       ),
     );
   }
-
+  String formatDate(DateTime date) {
+    final DateFormat formatter = DateFormat('dd/MM/yyyy');
+    return formatter.format(date);
+  }
   String _getCategoryName(BuildContext context, String categoryId) {
     final state = context.read<CategoryBloc>().state;
     if (state is CategoryLoaded) {

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hot_diamond_admin/src/controllers/connectivity/connectivity_state.dart';
 import 'package:hot_diamond_admin/src/controllers/splash/splash_bloc.dart';
 import 'package:hot_diamond_admin/src/screens/login/login_screen.dart';
 import 'package:hot_diamond_admin/src/screens/main_screen.dart';
+import 'package:hot_diamond_admin/src/screens/no_internet/no_internet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../controllers/connectivity/connectivity_bloc.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -13,12 +17,12 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
-
   @override
   void initState() {
     super.initState();
     _checkLogged();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,24 +43,25 @@ class _SplashState extends State<Splash> {
   }
 
   _checkLogged() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isLOggedIn = prefs.getBool('isLoggedIn') ?? false;
+  final prefs = await SharedPreferences.getInstance();
+  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-    if (isLOggedIn) {
-      Future.delayed(const Duration(seconds: 3),(){
-        if(mounted){
-          Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()));
-        }
-      });
+  Future.delayed(const Duration(seconds: 3), () {
+    if (mounted) {
+      final connectivityState = context.read<ConnectivityBloc>().state;
       
-    } else{
-      Future.delayed(const Duration(seconds: 3),(){
-        if(mounted){
-          Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => LoginPage()));
-        }
-      });
+      if (connectivityState is ConnectivityFailure) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const NoInternetScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => isLoggedIn ? const MainScreen() : LoginPage(),
+          ),
+        );
+      }
     }
-  }
+  });
+}
 }

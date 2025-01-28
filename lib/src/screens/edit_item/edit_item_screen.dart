@@ -17,8 +17,10 @@ import 'package:hot_diamond_admin/src/screens/edit_item/widgets/image_upload_sec
 import 'package:hot_diamond_admin/src/screens/edit_item/widgets/offer_section.dart';
 import 'package:hot_diamond_admin/src/screens/edit_item/widgets/product_details_card.dart';
 import 'package:hot_diamond_admin/src/screens/edit_item/widgets/variation_section.dart';
+import 'package:hot_diamond_admin/src/services/image_cloudinary_service/image_cloudinary_service.dart';
 
 import 'package:hot_diamond_admin/widgets/show_custom_snackbar.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditItemScreen extends StatefulWidget {
   final ItemModel item;
@@ -39,6 +41,7 @@ class EditItemScreenState extends State<EditItemScreen> {
   final _formKey = GlobalKey<FormState>();
   String? selectedCategory;
   List<dynamic> selectedImages = [];
+  List<String> removedImageUrls = [];
   bool loading = false;
   bool hasVariations = false;
   bool hasOffer = false;
@@ -49,7 +52,7 @@ class EditItemScreenState extends State<EditItemScreen> {
   DiscountType selectedDiscountType = DiscountType.percentage;
   bool isOfferActive = true;
   bool isInStock = true;
-
+  final ImageCloudinaryService _cloudinaryService = ImageCloudinaryService();
   @override
   void initState() {
     super.initState();
@@ -61,7 +64,7 @@ class EditItemScreenState extends State<EditItemScreen> {
     _amount.text = widget.item.price.toString();
     _description.text = widget.item.description;
     selectedCategory = widget.item.categoryId;
-    selectedImages = widget.item.imageUrls;
+    selectedImages = List.from(widget.item.imageUrls);
     hasVariations = widget.item.variations.isNotEmpty;
     isInStock = widget.item.isInStock;
     if (hasVariations) {
@@ -246,6 +249,39 @@ class EditItemScreenState extends State<EditItemScreen> {
     );
   }
 
+  Future<List<String>> _processImages() async {
+    List<String> finalImageUrls = [];
+    
+    try {
+      // Handle existing images that weren't removed
+      finalImageUrls.addAll(
+        selectedImages
+            .whereType<String>()
+            .where((url) => !removedImageUrls.contains(url))
+            .toList(),
+      );
+
+      // Upload new images
+      final newImages = selectedImages.whereType<File>().toList();
+      if (newImages.isNotEmpty) {
+        final uploadedUrls = await _cloudinaryService.uploadImages(
+          newImages.map((file) => file.path).toList(),
+        );
+        finalImageUrls.addAll(uploadedUrls);
+      }
+
+      // Delete removed images from Cloudinary
+      if (removedImageUrls.isNotEmpty) {
+        await _cloudinaryService.deleteImagesByUrls(removedImageUrls);
+      }
+
+      return finalImageUrls;
+    } catch (e) {
+      log('Error processing images: $e');
+      throw Exception('Failed to process images: $e');
+    }
+  }
+
   void _clearOfferData() {
     offerDiscountValue.clear();
     offerDescription.clear();
@@ -261,30 +297,55 @@ class EditItemScreenState extends State<EditItemScreen> {
     _selectedPortionTypes.clear();
   }
 
-  void _removeImage(int index) {
+// Update the _removeImage method in EditItemScreenState
+void _removeImage(int index) async {
+  setState(() {
+    loading = true;
+  });
+
+  try {
+    final removedImage = selectedImages[index];
+    
+    if (removedImage is String) {
+      // Add to removed URLs list for later cleanup
+      removedImageUrls.add(removedImage);
+    }
+    
     setState(() {
       selectedImages.removeAt(index);
+      loading = false;
     });
+  } catch (e) {
+    setState(() {
+      loading = false;
+    });
+    showCustomSnackbar(context, 'Failed to remove image: $e', isError: true);
   }
+}
 
   void _pickImage() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: true,
-      );
-
-      if (result != null && result.paths.isNotEmpty) {
+      final picker = ImagePicker();
+      final List<XFile> images = await picker.pickMultiImage();
+      
+      if(images.isNotEmpty){
         setState(() {
-          selectedImages.add(File(result.paths.first!));
+          selectedImages.addAll(images.map((image) => File(image.path)).toList());
         });
+        if(mounted) {
+          setState(() {
+          
+        });
+        }
       }
+      
     } catch (e) {
       log('Error picking image: $e');
+
     }
   }
 
-  void _submitItem() async {
+   void _submitItem() async {
     if (_formKey.currentState!.validate()) {
       if (selectedImages.isEmpty) {
         showCustomSnackbar(context, 'Please select at least one image', isError: true);
@@ -296,6 +357,23 @@ class EditItemScreenState extends State<EditItemScreen> {
       });
 
       try {
+        // All images should already be on Cloudinary at this point
+        List<String> finalImageUrls = [];
+        
+        //Handle existing images (URLs)
+        finalImageUrls.addAll(selectedImages.whereType<String>().where((url)=> !removedImageUrls.contains(url)).toList());
+
+
+        // Upload new images (Files)
+        final newimages = selectedImages.whereType<File>().toList();
+        if(newimages.isNotEmpty){
+          final uploadedUrls = await _cloudinaryService.uploadImages(
+            newimages.map((file) => file.path).toList(),
+          );
+          finalImageUrls.addAll(uploadedUrls);
+        }
+
+        // Create offer if needed
         OfferModel? offer;
         if (hasOffer) {
           if (offerDiscountValue.text.isEmpty ||
@@ -319,8 +397,9 @@ class EditItemScreenState extends State<EditItemScreen> {
           );
         }
 
+        // Process variations if needed
         List<VariationModel> variations = [];
-        if (_quantityControllers.isNotEmpty) {
+        if (hasVariations && _quantityControllers.isNotEmpty) {
           for (int i = 0; i < _quantityControllers.length; i++) {
             variations.add(VariationModel(
               id: DateTime.now().millisecondsSinceEpoch.toString() + i.toString(),
@@ -330,31 +409,33 @@ class EditItemScreenState extends State<EditItemScreen> {
             ));
           }
         }
+        
+        final updatedItem = widget.item.copyWith(
+          name: _itemName.text.toUpperCase(),
+          categoryId: selectedCategory,
+          price: double.parse(_amount.text),
+          description: _description.text,
+          imageUrls: finalImageUrls,
+          variations: variations.isNotEmpty ? variations : null,
+          offer: offer,
+          isInStock: isInStock
+        );
 
-        List<String> imageUrls = selectedImages.whereType<String>().toList();
-        List<String> newImagePaths =
-            selectedImages.whereType<File>().map((file) => file.path).toList();
-
-        context.read<ItemBloc>().add(UpdateItemEvent(
-              widget.item.copyWith(
-                name: _itemName.text.toUpperCase(),
-                categoryId: selectedCategory!,
-                price: double.parse(_amount.text),
-                description: _description.text,
-                imageUrls: imageUrls + newImagePaths,
-                variations: variations.isNotEmpty ? variations : null,
-                offer: offer,
-                isInStock: isInStock
-              ),
-            ));
+        //update item using bloc
+        context.read<ItemBloc>().add(UpdateItemEvent(updatedItem));
       } catch (e) {
         setState(() {
           loading = false;
         });
-        showCustomSnackbar(context, 'Error updating item: ${e.toString()}', isError: true);
+        showCustomSnackbar(
+          context, 
+          'Error updating item: ${e.toString()}', 
+          isError: true,
+        );
       }
     }
   }
+
 
   void _addVariation() {
     setState(() {

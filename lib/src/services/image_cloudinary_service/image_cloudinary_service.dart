@@ -65,6 +65,7 @@ class ImageCloudinaryService {
 
   Future<List<String>> uploadImages(List<String> imagePaths) async {
     List<String> uploadedUrls = [];
+    List<String> failedPaths = [];
 
     for (String imagePath in imagePaths) {
       try {
@@ -72,24 +73,41 @@ class ImageCloudinaryService {
         uploadedUrls.add(url);
       } catch (e) {
         log('Error uploading image: $imagePath, $e');
+        failedPaths.add(imagePath);
       }
     }
+
+    if (failedPaths.isNotEmpty) {
+      // If any uploads failed, attempt to clean up the successful uploads
+      await deleteImagesByUrls(uploadedUrls);
+      throw Exception('Failed to upload images: ${failedPaths.join(", ")}');
+    }
+
     return uploadedUrls;
   }
 
   Future<bool> deleteImagesByUrls(List<String> imageUrls) async {
     bool allSuccess = true;
+    List<String> failedUrls = [];
+
     for (String imageUrl in imageUrls) {
       try {
         final success = await deleteImageByUrl(imageUrl);
         if (!success) {
           allSuccess = false;
+          failedUrls.add(imageUrl);
         }
       } catch (e) {
-        log('Error deleting images: $imageUrl,Error: $e');
+        log('Error deleting image: $imageUrl, Error: $e');
         allSuccess = false;
+        failedUrls.add(imageUrl);
       }
     }
+
+    if (failedUrls.isNotEmpty) {
+      log('Failed to delete images: ${failedUrls.join(", ")}');
+    }
+
     return allSuccess;
   }
 
@@ -101,13 +119,18 @@ class ImageCloudinaryService {
 
       final publicId = extractPublicId(imageUrl);
       if (publicId == null) {
+        log('Could not extract public ID from URL: $imageUrl');
         return false;
       }
 
-      return await deleteImage(publicId);
+      final success = await deleteImage(publicId);
+      if (!success) {
+        log('Failed to delete image with public ID: $publicId');
+      }
+      return success;
     } catch (e) {
       log('Error in deleteImageByUrl: $e');
-      rethrow;
+      return false;
     }
   }
 
@@ -127,7 +150,8 @@ class ImageCloudinaryService {
       var digest = sha1.convert(bytes);
       String signature = digest.toString();
 
-      var uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/destroy');
+      var uri =
+          Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/destroy');
 
       var response = await http.post(
         uri,
@@ -144,7 +168,8 @@ class ImageCloudinaryService {
         var responseBody = jsonDecode(response.body);
         return responseBody['result'] == 'ok';
       } else {
-        throw Exception('Failed to delete image. Status: ${response.statusCode}');
+        throw Exception(
+            'Failed to delete image. Status: ${response.statusCode}');
       }
     } catch (e) {
       log('Error in deleteImage: $e');
@@ -168,12 +193,13 @@ class ImageCloudinaryService {
       final Uri imageUri = Uri.parse(imageUrl);
       final pathSegments = imageUri.pathSegments;
       final uploadIndex = pathSegments.indexOf('upload');
+
       if (uploadIndex != -1 && uploadIndex < pathSegments.length - 1) {
-        final String fullPath = pathSegments
-            .sublist(uploadIndex + 1)
-            .join('/')
-            .split('.')
-            .first;
+        // Join all segments after 'upload' and remove file extension
+        final String fullPath =
+            pathSegments.sublist(uploadIndex + 1).join('/').split('.').first;
+
+        // Remove version number if present
         return fullPath.replaceFirst(RegExp(r'v\d+/'), '');
       }
       return null;

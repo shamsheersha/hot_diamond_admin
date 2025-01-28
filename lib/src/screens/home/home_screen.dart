@@ -1,195 +1,3 @@
-// import 'dart:developer';
-
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:hot_diamond_admin/src/controllers/order/order_bloc.dart';
-// import 'package:hot_diamond_admin/src/controllers/order/order_event.dart';
-// import 'package:hot_diamond_admin/src/controllers/order/order_state.dart';
-// import 'package:hot_diamond_admin/src/enum/checkout_types.dart';
-// import 'package:hot_diamond_admin/src/model/order_model/order_model.dart';
-// import 'package:hot_diamond_admin/src/screens/order_screen/order_screen.dart';
-// import 'package:hot_diamond_admin/src/screens/home/confirmed_order_screen/confirmed_order_screen.dart';
-
-// class HomeScreen extends StatelessWidget {
-//   const HomeScreen({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Hot Diamond Admin',
-//             style: TextStyle(fontWeight: FontWeight.bold)),
-//         backgroundColor: Colors.grey[100],
-//       ),
-//       body: BlocBuilder<AdminOrderBloc, AdminOrderState>(
-//         builder: (context, state) {
-//           log('Current State: $state'); // Debug print
-
-//           if (state is AdminOrderInitial) {
-//             log('Dispatching FetchAllOrders'); // Debug print
-//             context.read<AdminOrderBloc>().add(FetchAllOrders());
-//             return const Center(
-//                 child: CircularProgressIndicator(color: Colors.black));
-//           }
-
-//           if (state is AdminOrderLoading) {
-//             return const Center(
-//                 child: CircularProgressIndicator(color: Colors.black));
-//           }
-
-//           if (state is AdminOrderFailure) {
-//             return Center(
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: [
-//                   Text('Error: ${state.error}'),
-//                   ElevatedButton(
-//                     onPressed: () =>
-//                         context.read<AdminOrderBloc>().add(FetchAllOrders()),
-//                     child: const Text('Retry'),
-//                   ),
-//                 ],
-//               ),
-//             );
-//           }
-
-//           if (state is AdminOrdersLoaded) {
-//             log('Orders loaded: ${state.orders.length}'); // Debug print
-
-//             final deliveredOrders = state.orders
-//                 .where((order) => order.status == OrderStatus.delivered)
-//                 .toList();
-//             final pendingOrders = state.orders
-//                 .where((order) => order.status != OrderStatus.delivered)
-//                 .toList();
-
-//             return Padding(
-//               padding: const EdgeInsets.all(20),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   const Text(
-//                     'Order Overview',
-//                     style: TextStyle(
-//                       fontSize: 24,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   Row(
-//                     children: [
-//                       _buildOrderCard(
-//                         context: context,
-//                         title: 'Delivered Orders',
-//                         count: deliveredOrders.length,
-//                         icon: Icons.local_shipping,
-//                         color: Colors.green,
-//                         onTap: () => _navigateToOrders(
-//                             context, OrderStatus.delivered, deliveredOrders),
-//                       ),
-//                       const SizedBox(width: 15),
-//                       _buildOrderCard(
-//                         context: context,
-//                         title: 'Pending Orders',
-//                         count: pendingOrders.length,
-//                         icon: Icons.pending_outlined,
-//                         color: Colors.orange,
-//                         onTap: () =>
-//                             _navigateToOrders(context, null, pendingOrders),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             );
-//           }
-
-//           return const Center(child: Text('Unexpected state'));
-//         },
-//       ),
-//     );
-//   }
-
-//   Widget _buildOrderCard({
-//     required BuildContext context,
-//     required String title,
-//     required int count,
-//     required IconData icon,
-//     required Color color,
-//     required VoidCallback onTap,
-//   }) {
-//     final formattedCount = count < 10 ? '0$count' : count.toString();
-
-//     return Expanded(
-//       child: InkWell(
-//         onTap: onTap,
-//         child: Container(
-//           padding: const EdgeInsets.all(15),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.circular(15),
-//             boxShadow: [
-//               BoxShadow(
-//                 color: Colors.black.withOpacity(0.1),
-//                 blurRadius: 10,
-//                 offset: const Offset(0, 5),
-//               )
-//             ],
-//           ),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     formattedCount,
-//                     style: const TextStyle(
-//                       fontSize: 70,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   Text(
-//                     title,
-//                     style: TextStyle(
-//                       fontSize: 17,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.grey[800],
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   void _navigateToOrders(
-//       BuildContext context, OrderStatus? status, List<OrderModel> orders) {
-//     if (status == OrderStatus.delivered) {
-//       Navigator.push(
-//         context,
-//         MaterialPageRoute(
-//           builder: (context) => ConfirmedOrdersScreen(orders: orders),
-//         ),
-//       );
-//     } else {
-//       Navigator.push(
-//         context,
-//         MaterialPageRoute(
-//           builder: (context) => OrdersScreen(
-//             initialStatus: status,
-//             preFilteredOrders: orders,
-//           ),
-//         ),
-//       );
-//     }
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -213,95 +21,120 @@ class HomeScreen extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.grey[100],
       ),
-      body: BlocBuilder<AdminOrderBloc, AdminOrderState>(
-        builder: (context, state) {
-          if (state is AdminOrderInitial) {
-            context.read<AdminOrderBloc>().add(FetchAllOrders());
-            return const Center(
-                child: CircularProgressIndicator(color: Colors.black));
-          }
-
-          if (state is AdminOrderLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: Colors.black));
-          }
-
-          if (state is AdminOrderFailure) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error: ${state.error}'),
-                  ElevatedButton(
-                    onPressed: () =>
-                        context.read<AdminOrderBloc>().add(FetchAllOrders()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is AdminOrdersLoaded) {
-            final deliveredOrders = state.orders
-                .where((order) => order.status == OrderStatus.delivered)
-                .toList();
-            final pendingOrders = state.orders
-                .where((order) => order.status != OrderStatus.delivered)
-                .toList();
-
-            final totalRevenue =
-                state.orders.fold(0.0, (sum, order) => sum + order.totalAmount);
-
-            return Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Order Overview',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      _buildOrderCard(
-                        context: context,
-                        title: 'Delivered Orders',
-                        count: deliveredOrders.length,
-                        icon: Icons.local_shipping,
-                        color: Colors.green,
-                        onTap: () => _navigateToOrders(
-                            context, OrderStatus.delivered, deliveredOrders),
-                      ),
-                      const SizedBox(width: 15),
-                      _buildOrderCard(
-                        context: context,
-                        title: 'Pending Orders',
-                        count: pendingOrders.length,
-                        icon: Icons.pending_outlined,
-                        color: Colors.orange,
-                        onTap: () =>
-                            _navigateToOrders(context, null, pendingOrders),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTotalRevenueCard(totalRevenue),
-                  const SizedBox(height: 20),
-                  _buildDateFilter(context),
-                  const SizedBox(height: 20),
-                  _buildSalesGraph(state.orders),
-                ],
-              ),
-            );
-          }
-
-          return const Center(child: Text('Unexpected state'));
+      body: RefreshIndicator(
+        onRefresh: () async {
+          context.read<AdminOrderBloc>().add(FetchAllOrders());
         },
+        color: Colors.black,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: BlocBuilder<AdminOrderBloc, AdminOrderState>(
+              builder: (context, state) {
+                if (state is AdminOrderInitial) {
+                  context.read<AdminOrderBloc>().add(FetchAllOrders());
+                  return const Center(
+                      child: CircularProgressIndicator(color: Colors.black));
+                }
+
+                if (state is AdminOrderLoading) {
+                  return const Center(
+                      child: CircularProgressIndicator(color: Colors.black));
+                }
+
+                if (state is AdminOrderFailure) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Error: ${state.error}'),
+                        ElevatedButton(
+                          onPressed: () => context
+                              .read<AdminOrderBloc>()
+                              .add(FetchAllOrders()),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (state is AdminOrdersLoaded) {
+                  final deliveredOrders = state.orders
+                      .where((order) => order.status == OrderStatus.delivered)
+                      .toList();
+                  final pendingOrders = state.orders
+                      .where((order) => order.status != OrderStatus.delivered)
+                      .toList();
+
+                  final totalRevenue = state.orders
+                      .fold(0.0, (sum, order) => sum + order.totalAmount);
+
+                  final dailyTotals = _calculateDailyTotals(state.orders);
+                  final monthlyTotals = _calculateMonthlyTotals(state.orders);
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Order Overview',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          _buildOrderCard(
+                            context: context,
+                            title: 'Delivered Orders',
+                            count: deliveredOrders.length,
+                            icon: Icons.local_shipping,
+                            color: Colors.green,
+                            onTap: () => _navigateToOrders(
+                                context, OrderStatus.delivered, deliveredOrders),
+                          ),
+                          const SizedBox(width: 15),
+                          _buildOrderCard(
+                            context: context,
+                            title: 'Pending Orders',
+                            count: pendingOrders.length,
+                            icon: Icons.pending_outlined,
+                            color: Colors.orange,
+                            onTap: () =>
+                                _navigateToOrders(context, null, pendingOrders),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTotalRevenueCard(totalRevenue),
+                      const SizedBox(height: 20),
+                      _buildDateFilter(context),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 300, // Set a fixed height for the chart
+                        child: _buildSalesGraph(state.orders),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildDailyTotalsCard(dailyTotals),
+                          const SizedBox(width: 10,),
+                          _buildMonthlyTotalsCard(monthlyTotals),
+                        ],
+                      )
+                    ],
+                  );
+                }
+
+                return const Center(child: Text('Unexpected state'));
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -469,7 +302,7 @@ class HomeScreen extends StatelessWidget {
               );
               if (pickedDate != null) {
                 startDateController.text =
-                    DateFormat('yyyy-MM-dd').format(pickedDate);
+                    DateFormat('dd--MM--yyyy').format(pickedDate);
               }
             },
             readOnly: true,
@@ -514,7 +347,7 @@ class HomeScreen extends StatelessWidget {
               );
               if (pickedDate != null) {
                 endDateController.text =
-                    DateFormat('yyyy-MM-dd').format(pickedDate);
+                    DateFormat('dd--MM--yyyy').format(pickedDate);
               }
             },
             readOnly: true,
@@ -524,9 +357,9 @@ class HomeScreen extends StatelessWidget {
           icon: const Icon(Icons.search),
           onPressed: () {
             final startDate =
-                DateFormat('yyyy-MM-dd').parse(startDateController.text);
+                DateFormat('dd--MM--yyyy').parse(startDateController.text);
             final endDate =
-                DateFormat('yyyy-MM-dd').parse(endDateController.text);
+                DateFormat('dd--MM--yyyy').parse(endDateController.text);
             context
                 .read<AdminOrderBloc>()
                 .add(FetchOrdersByDate(startDate, endDate));
@@ -539,113 +372,93 @@ class HomeScreen extends StatelessWidget {
   Widget _buildSalesGraph(List<OrderModel> orders) {
     final salesData = _generateSalesData(orders);
 
-    return Expanded(
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: true,
-            getDrawingHorizontalLine: (value) {
-              return const FlLine(
-                color: Color(0xff37434d),
-                strokeWidth: 1,
-              );
-            },
-            getDrawingVerticalLine: (value) {
-              return const FlLine(
-                color: Color(0xff37434d),
-                strokeWidth: 1,
-              );
-            },
-          ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 30,
-                // getTextStyles: (value, meta) {
-                //   const style = TextStyle(
-                //     color: Color(0xff68737d),
-                //     fontWeight: FontWeight.bold,
-                //     fontSize: 16,
-                //   );
-                //   return style;
-                // },
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    DateFormat.M().format(DateTime(1970, value.toInt())),
-                    style: const TextStyle(
-                      color: Color(0xff68737d),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  );
-                },
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28,
-                // getTextStyles: (value, meta) {
-                //   const style = TextStyle(
-                //     color: Color(0xff67727d),
-                //     fontWeight: FontWeight.bold,
-                //     fontSize: 15,
-                //   );
-                //   return style;
-                // },
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '₹${value.toInt()}',
-                    style: const TextStyle(
-                      color: Color(0xff67727d),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
-                  );
-                },
-              ),
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: true,
+          getDrawingHorizontalLine: (value) {
+            return const FlLine(
+              color: Color(0xff37434d),
+              strokeWidth: 1,
+            );
+          },
+          getDrawingVerticalLine: (value) {
+            return const FlLine(
+              color: Color(0xff37434d),
+              strokeWidth: 1,
+            );
+          },
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  DateFormat.M().format(DateTime(1970, value.toInt())),
+                  style: const TextStyle(
+                    color: Color(0xff68737d),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                );
+              },
             ),
           ),
-          borderData: FlBorderData(
-            show: true,
-            border: Border.all(color: const Color(0xff37434d), width: 1),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  '₹${value.toInt()}',
+                  style: const TextStyle(
+                    color: Color(0xff67727d),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              },
+            ),
           ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: salesData,
-              isCurved: true,
-              barWidth: 5,
-              isStrokeCapRound: true,
-              dotData: const FlDotData(
-                show: false,
-              ),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xffFF0000)
-                        .withOpacity(0.3), // Red with opacity
-                    const Color(0xffFF0000)
-                        .withOpacity(0.1), // Red with opacity
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: Border.all(color: const Color(0xff37434d), width: 1),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: salesData,
+            isCurved: true,
+            barWidth: 5,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(
+              show: false,
+            ),
+            belowBarData: BarAreaData(
+              show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xffFF0000), // Red
-                  const Color(0xffFF0000).withOpacity(0.5), // Red with opacity
+                  const Color(0xffFF0000).withOpacity(0.3), // Red with opacity
+                  const Color(0xffFF0000).withOpacity(0.1), // Red with opacity
                 ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
-          ],
-        ),
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xffFF0000), // Red
+                const Color(0xffFF0000).withOpacity(0.5), // Red with opacity
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -671,5 +484,106 @@ class HomeScreen extends StatelessWidget {
     }
 
     return salesData;
+  }
+
+  Widget _buildDailyTotalsCard(double dailyTotals) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Daily Totals',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '₹${dailyTotals.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyTotalsCard(double monthlyTotals) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Monthly Totals',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '₹${monthlyTotals.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Colors.purple,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  double _calculateDailyTotals(List<OrderModel> orders) {
+    final today = DateTime.now();
+    return orders
+        .where((order) =>
+            order.createdAt.year == today.year &&
+            order.createdAt.month == today.month &&
+            order.createdAt.day == today.day)
+        .fold(0.0, (sum, order) => sum + order.totalAmount);
+  }
+
+  double _calculateMonthlyTotals(List<OrderModel> orders) {
+    final today = DateTime.now();
+    return orders
+        .where((order) =>
+            order.createdAt.year == today.year &&
+            order.createdAt.month == today.month)
+        .fold(0.0, (sum, order) => sum + order.totalAmount);
   }
 }

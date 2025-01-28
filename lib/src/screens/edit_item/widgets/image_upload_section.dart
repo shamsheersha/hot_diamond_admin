@@ -116,41 +116,55 @@ class ImageUploadSection extends StatelessWidget {
   }
 
   Widget _buildImageTile(dynamic image, int index, BuildContext context) {
-    final isUrl = image is String;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: isUrl ? NetworkImage(image) : FileImage(image as File),
+  return Stack(
+    fit: StackFit.expand,
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: image is String 
+          ? Image.network(
+              image,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[200],
+                  child: Icon(Icons.error, color: Colors.grey[400]),
+                );
+              },
+            )
+          : Image.file(
+              image as File,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[200],
+                  child: Icon(Icons.error, color: Colors.grey[400]),
+                );
+              },
+            ),
+      ),
+      Positioned(
+        top: 4,
+        right: 4,
+        child: GestureDetector(
+          onTap: () => onRemoveImage(index),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 16,
             ),
           ),
         ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: GestureDetector(
-            onTap: () => onRemoveImage(index),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildAddMoreButton(BuildContext context) {
     return Container(
