@@ -123,8 +123,8 @@ class OrderServices {
     try {
       // Update order status in Firestore
       await _firestore.collection('orders').doc(orderId).update({
-        'status': newStatus.toString().split('.').last,
-        'updatedAt': FieldValue.serverTimestamp(),
+        'status': newStatus.toString(),
+        'updatedAt': DateTime.now(),
       });
 
       // Fetch order details to get user ID

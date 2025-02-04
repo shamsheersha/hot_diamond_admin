@@ -147,7 +147,7 @@ class _ListOfItemsState extends State<ListOfItems> {
     );
   }
 
-  Widget _buildCategorizedItems(List<ItemModel> items) {
+   Widget _buildCategorizedItems(List<ItemModel> items) {
     // Group items by category
     final groupedItems = <String, List<ItemModel>>{};
     for (var item in items) {
@@ -157,41 +157,48 @@ class _ListOfItemsState extends State<ListOfItems> {
       groupedItems[item.categoryId]!.add(item);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: groupedItems.length,
-      itemBuilder: (context, index) {
-        final categoryId = groupedItems.keys.elementAt(index);
-        final categoryItems = groupedItems[categoryId]!;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth > 1100 ? 4 : 2;
+        final childAspectRatio = constraints.maxWidth > 1100 ? 0.85 : 0.75;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Text(
-                FirebaseCategoryService.getCategoryName(categoryId),
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: groupedItems.length,
+          itemBuilder: (context, index) {
+            final categoryId = groupedItems.keys.elementAt(index);
+            final categoryItems = groupedItems[categoryId]!;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    FirebaseCategoryService.getCategoryName(categoryId),
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: categoryItems.length,
-              itemBuilder: (context, index) =>
-                  _buildItemCard(categoryItems[index]),
-            ),
-            const SizedBox(height: 16),
-          ],
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    childAspectRatio: childAspectRatio,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: categoryItems.length,
+                  itemBuilder: (context, index) =>
+                      _buildItemCard(categoryItems[index]),
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
         );
       },
     );
@@ -209,16 +216,23 @@ class _ListOfItemsState extends State<ListOfItems> {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: filteredItems.length,
-      itemBuilder: (context, index) => _buildItemCard(filteredItems[index]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth > 1100 ? 4 : 2;
+        final childAspectRatio = constraints.maxWidth > 1100 ? 0.85 : 0.75;
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: childAspectRatio,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: filteredItems.length,
+          itemBuilder: (context, index) => _buildItemCard(filteredItems[index]),
+        );
+      },
     );
   }
 

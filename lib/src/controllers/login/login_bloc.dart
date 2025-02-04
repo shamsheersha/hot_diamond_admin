@@ -24,7 +24,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     if (event.username == 'hotdiamonduser' &&
         event.password == 'hotdiamonduser') {
-          log('lodded');
+          log('loadded');
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn',true);
       emit(LoginSuccess());

@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -13,7 +14,6 @@ import 'package:hot_diamond_admin/src/controllers/login/login_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/order/order_bloc.dart';
 import 'package:hot_diamond_admin/src/controllers/order/order_event.dart';
 import 'package:hot_diamond_admin/src/controllers/splash/splash_bloc.dart';
-import 'package:hot_diamond_admin/src/screens/no_internet/connectivity_checker.dart';
 import 'package:hot_diamond_admin/src/screens/splash/splash.dart';
 import 'package:hot_diamond_admin/src/services/firebase_category_service/firebase_category_service.dart';
 import 'package:hot_diamond_admin/src/services/firebase_item_service/firebase_item_service.dart';
@@ -22,8 +22,22 @@ import 'package:hot_diamond_admin/src/services/order_service/order_service.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   await dotenv.load(fileName: '.env');
+
+  if(kIsWeb){
+    await Firebase.initializeApp(
+      options: FirebaseOptions(
+          apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+          appId: dotenv.env['FIREBASE_APP_ID'] ?? '',
+          measurementId: dotenv.env['FIREBASE_MEASUREMENT_ID'] ?? '',
+          authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? '',
+          storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+          messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+          projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? ''));
+  }else{
+    await Firebase.initializeApp();
+  }
+  
 
   // Initialize services
   final categoryService = FirebaseCategoryService();
